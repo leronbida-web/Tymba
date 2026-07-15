@@ -96,12 +96,12 @@ const WORLD_PICKAXE_PATTERN = [
   { dx:0, dy:2, type:'wood'  },
 ];
 const WORLD_ROCK_HITS_NEEDED_PICKAXE = 5; // com picareta em mãos, só precisa de 5 toques pra quebrar a rocha
-// padrão "espada": 2 pedras lado a lado em cima (a lâmina) + 1 madeira embaixo
-// à esquerda (o cabo) — usa exatamente 1 madeira e 2 pedras
+// padrão "espada": 2 pedras empilhadas em cima + 1 madeira embaixo, tudo numa
+// coluna só (mesma linha vertical) — usa exatamente 1 madeira e 2 pedras
 const WORLD_SWORD_PATTERN = [
   { dx:0, dy:0, type:'stone' },
-  { dx:1, dy:0, type:'stone' },
-  { dx:0, dy:1, type:'wood'  },
+  { dx:0, dy:1, type:'stone' },
+  { dx:0, dy:2, type:'wood'  },
 ];
 const WORLD_ENEMY_KILL_COINS = 100; // moedas ganhas ao matar um bichinho selvagem com a espada
 // raios de colisão física (bloqueiam o movimento do player, obrigando a desviar)
