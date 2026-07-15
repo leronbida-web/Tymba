@@ -109,7 +109,10 @@ const WORLD_PLAYER_COLLISION_RADIUS = 14;
 const WORLD_ROCK_COLLISION_RADIUS = 22;
 const WORLD_TREE_TRUNK_COLLISION_RADIUS = 14; // só o tronco na base da árvore, não a copa inteira
 const WORLD_BLOCK_COLLISION_RADIUS = 18;
-const WORLD_HOUSE_LIFETIME_DAYS = { 1: 5 }; // casa nível 1 dura 5 dias do mundo
+const WORLD_HOUSE_LIFETIME_DAYS = {
+  wood: { 1: 5 },   // casa de madeira nível 1 dura 5 dias do mundo
+  stone: { 1: 30 }, // casa de pedra nível 1 dura 30 dias do mundo
+};
 const WORLD_HOUSE_SAFE_RADIUS = 260; // bichinhos selvagens não chegam perto de uma casa dentro desse raio
 
 // recompensa por permanecer no mundo: cada "dia do mundo" (dia+noite) completo dá moedas e XP

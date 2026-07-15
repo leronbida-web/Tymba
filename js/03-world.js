@@ -266,19 +266,24 @@ function worldRockSvg(){
   return '<img src="https://i.imgur.com/XSMTZnJ.png" style="width:100%; height:100%; object-fit:contain; pointer-events:none;" draggable="false">';
 }
 
-// Sprites das casas por nível. Adicione novos casos (level 2, 3, ...) trocando o src.
-// Hospede cada sprite no Imgur (ou onde preferir) e cole a URL direta aqui.
+// Sprites das casas por tipo de material + nível. Adicione novos casos (nível 2, 3...)
+// trocando/acrescentando o src. Hospede cada sprite no Imgur e cole a URL direta aqui.
 const WORLD_HOUSE_SPRITES = {
-  1: 'https://i.imgur.com/E3K1nra.png',
-  // 2: 'https://i.imgur.com/sua-imagem-nivel-2.png',
-  // 3: 'https://i.imgur.com/sua-imagem-nivel-3.png',
+  wood: {
+    1: 'https://i.imgur.com/E3K1nra.png',
+    // 2: 'https://i.imgur.com/sua-imagem-nivel-2.png',
+  },
+  stone: {
+    1: 'https://i.imgur.com/W2Ps6yY.png',
+  },
 };
-function worldHouseSvg(level){
+function worldHouseSvg(type, level){
+  type = type || 'wood';
   level = level || 1;
-  // cada nível pode ter sua própria sprite (outros níveis colocarão outras imagens)
-  const src = WORLD_HOUSE_SPRITES[level];
+  // cada tipo/nível pode ter sua própria sprite
+  const src = (WORLD_HOUSE_SPRITES[type] || {})[level];
   if(src){
-    return '<img src="' + src + '" alt="Casa nível ' + level + '" ' +
+    return '<img src="' + src + '" alt="Casa ' + type + ' nível ' + level + '" ' +
       'style="width:100%;height:100%;display:block;object-fit:contain;image-rendering:auto;" />';
   }
   // fallback genérico: moldura de madeira em formato de portal (mesma do nível 1 original)
@@ -351,7 +356,7 @@ function renderWorldStatic(){
     el.style.width = (WORLD_HOUSE_COLS * WORLD_GRID) + 'px';
     el.style.height = (WORLD_HOUSE_ROWS * WORLD_GRID) + 'px';
     el.style.zIndex = Math.round(h.originY + WORLD_HOUSE_ROWS * WORLD_GRID);
-    el.innerHTML = worldHouseSvg(h.level);
+    el.innerHTML = worldHouseSvg(h.type, h.level);
     entities.appendChild(el);
   });
 
@@ -682,6 +687,7 @@ function setupWorldGroundTap(){
     if(worldBuildMode === 'wood') w.wood -= 1; else w.stone -= 1;
     w.blocks.push({ id:'b'+Date.now(), x: worldX, y: worldY, gx, gy, type: worldBuildMode });
     if(worldBuildMode === 'wood') tryBuildHouse(w, gx, gy);
+    if(worldBuildMode === 'stone') tryBuildStoneHouse(w, gx, gy);
     if(!w.hasAxe) tryBuildAxe(w, gx, gy);
     if(!w.hasPickaxe) tryBuildPickaxe(w, gx, gy);
     if(!w.hasSword) tryBuildSword(w, gx, gy);
@@ -729,15 +735,50 @@ function tryBuildHouse(w, placedGx, placedGy){
     });
     w.houses.push({
       id: 'h' + Date.now(),
+      type: 'wood',
       level: 1,
       // os blocos são centralizados no ponto (gx*GRID, gy*GRID) via transform -50%,-50%,
       // então a borda visual da casa começa meio bloco antes da célula de origem
       originX: originGx * WORLD_GRID - WORLD_GRID / 2,
       originY: originGy * WORLD_GRID - WORLD_GRID / 2,
       builtAt: Date.now(),
-      expiresAt: Date.now() + WORLD_HOUSE_LIFETIME_DAYS[1] * WORLD_DAY_MS,
+      expiresAt: Date.now() + WORLD_HOUSE_LIFETIME_DAYS.wood[1] * WORLD_DAY_MS,
     });
-    toast('🏠 Casa nível 1 construída! Os bichinhos selvagens vão evitar essa área.');
+    toast('🏠 Casa de madeira construída! Os bichinhos selvagens vão evitar essa área.');
+    return;
+  }
+}
+
+// tenta encaixar o mesmo padrão da casa (formato de portal), mas usando pedra em vez
+// de madeira — usa o bloco recém colocado como qualquer uma das 8 posições do padrão
+function tryBuildStoneHouse(w, placedGx, placedGy){
+  for(const [ox, oy] of WORLD_HOUSE_PATTERN){
+    const originGx = placedGx - ox, originGy = placedGy - oy;
+    const allStone = WORLD_HOUSE_PATTERN.every(([dx, dy]) => {
+      const b = w.blocks.find(b => b.gx === originGx + dx && b.gy === originGy + dy);
+      return b && b.type === 'stone';
+    });
+    if(!allStone) continue;
+    const gateFree = WORLD_HOUSE_GATE_CELLS.every(([dx, dy]) => {
+      return !w.blocks.some(b => b.gx === originGx + dx && b.gy === originGy + dy);
+    });
+    if(!gateFree) continue;
+
+    // padrão completo! remove os 8 blocos de pedra usados e cria a casa de pedra
+    WORLD_HOUSE_PATTERN.forEach(([dx, dy]) => {
+      const gx = originGx + dx, gy = originGy + dy;
+      w.blocks = w.blocks.filter(b => !(b.gx === gx && b.gy === gy));
+    });
+    w.houses.push({
+      id: 'h' + Date.now(),
+      type: 'stone',
+      level: 1,
+      originX: originGx * WORLD_GRID - WORLD_GRID / 2,
+      originY: originGy * WORLD_GRID - WORLD_GRID / 2,
+      builtAt: Date.now(),
+      expiresAt: Date.now() + WORLD_HOUSE_LIFETIME_DAYS.stone[1] * WORLD_DAY_MS,
+    });
+    toast('🪨🏠 Casa de pedra construída! Bem mais resistente que a de madeira.');
     return;
   }
 }
@@ -995,12 +1036,16 @@ function worldLoop(ts){
     }
   });
 
-  // casas nível 1 desmoronam depois de 10 dias do mundo
+  // casas desmoronam quando o tempo de vida do material acaba (madeira: 5 dias, pedra: 30 dias)
   if(w.houses.length){
     const before = w.houses.length;
+    const collapsed = w.houses.filter(h => now >= h.expiresAt);
     w.houses = w.houses.filter(h => now < h.expiresAt);
     if(w.houses.length !== before){
-      toast('🏚️ Uma casa nível 1 desmoronou depois de 5 dias.');
+      const hadStone = collapsed.some(h => h.type === 'stone');
+      const hadWood = collapsed.some(h => h.type !== 'stone');
+      if(hadWood) toast('🏚️ Uma casa de madeira desmoronou depois de 5 dias.');
+      if(hadStone) toast('🪨🏚️ Uma casa de pedra desmoronou depois de 30 dias.');
       treesChanged = true;
     }
   }
