@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Bichinho Elemental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- SETUP SCREEN -->
+  <div class="screen active" id="screen-setup">
+    <div class="eyebrow">Novo bichinho</div>
+    <svg class="blob-preview" id="setupBlobPreview" viewBox="0 0 200 200"></svg>
+    <h1 style="font-size:22px;">Como vai se chamar?</h1>
+    <input id="nameInput" maxlength="14" placeholder="Nome do bichinho" autocomplete="off">
+    <button class="btn-primary" onclick="createPet()">Começar aventura</button>
+  </div>
+
+  <!-- HOME SCREEN -->
+  <div class="screen" id="screen-home">
+    <div class="topbar topbar-glass">
+      <div class="pet-id dev-adjustable" data-dev-key="petId">
+        <div class="name" id="homeName">—</div>
+        <div class="level" id="homeLevel">NÍVEL 1</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+        <button class="fullscreen-btn" id="fullscreenBtn" onclick="toggleFullscreen()" aria-label="Tela cheia">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="8 3 3 3 3 8"></polyline>
+            <polyline points="16 3 21 3 21 8"></polyline>
+            <polyline points="3 16 3 21 8 21"></polyline>
+            <polyline points="21 16 21 21 16 21"></polyline>
+          </svg>
+        </button>
+        <div class="coin-pill dev-adjustable" data-dev-key="coinPill"><span class="coin-pill-icon"></span><span id="homeCoins">0</span></div>
+      </div>
+    </div>
+
+    <div class="home-subrow">
+      <div class="element-badge dev-adjustable" data-dev-key="elementBadge" id="elementBadge">Fogo</div>
+      <button class="status-icon-btn dev-adjustable" data-dev-key="statusBtn" onclick="openStatus()" aria-label="Status"></button>
+    </div>
+
+    <div class="stage">
+      <div class="pet-stage-center" id="petStageCenter">
+        <!-- bichinho: sprite estática com animação de respiração; data-element é trocado dinamicamente pelo renderStage() -->
+        <!-- wrapper separado do modo dev: a animação de respirar usa transform, então o
+             redimensionar/mover do modo dev fica num elemento de fora pra não conflitar -->
+        <div class="dev-adjustable" data-dev-key="petSprite" style="display:inline-flex;">
+          <div class="pet-sprite" data-element="terra" style="--sprite-w: 260px;" onclick="onPetTap()">
+            <div class="pet-pedestal"></div>
+            <div class="pet-sprite-img"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="duel-actions">
+      <button class="btn-duel-hero dev-adjustable" data-dev-key="duelHero" onclick="openOnlineSetup()" aria-label="Duelo 1x1"></button>
+      <div class="home-icon-row">
+        <button class="home-icon-btn dev-adjustable" data-dev-key="iconMundo" style="background-image:url('https://i.imgur.com/5oDvPyg.png')" onclick="openWorld()" aria-label="Mundo"></button>
+        <button class="home-icon-btn dev-adjustable" data-dev-key="iconPoderes" style="background-image:url('https://i.imgur.com/bcdRMCp.png')" onclick="openPoderes()" aria-label="Poderes"></button>
+        <button class="home-icon-btn dev-adjustable" data-dev-key="iconDuelIA" style="background-image:url('https://i.imgur.com/eSvcTus.png')" onclick="openDuelSetup()" aria-label="Duelo contra IA"></button>
+        <button class="home-icon-btn dev-adjustable" data-dev-key="iconMinigame" style="background-image:url('https://i.imgur.com/Pa2TSVp.png')" onclick="openTreinos()" aria-label="Minijogos"></button>
+      </div>
+    </div>
+
+    <button id="devModeToggle" onclick="toggleDevMode()" aria-label="Modo desenvolvedor">🛠</button>
+    <div id="devModePanel" style="display:none;">
+      <div class="dev-panel-title">🛠 Modo dev — arraste 1 dedo pra mover, belisque com 2 pra redimensionar</div>
+      <button onclick="resetDevLayout()">Resetar tudo</button>
+      <button onclick="exportDevLayout()">Exportar valores</button>
+    </div>
+  </div>
+
+  <!-- Modal com os valores do modo dev em texto, pra copiar manualmente quando o clipboard falha -->
+  <div class="overlay-modal" id="devExportModal">
+    <div class="modal-card">
+      <h2>Valores do modo dev</h2>
+      <p>Toque e segure no texto abaixo pra selecionar tudo e copiar (ou já tentei copiar sozinho pra você).</p>
+      <textarea id="devExportTextarea" readonly
+        style="width:100%; height:160px; font-family:monospace; font-size:12px; padding:10px; border-radius:12px; border:2px solid var(--card-border, #ddd); resize:none; margin-bottom:14px;"
+        onclick="this.focus(); this.select();"></textarea>
+      <button class="btn-primary" onclick="document.getElementById('devExportModal').classList.remove('active')">Fechar</button>
+    </div>
+  </div>
+
+  <!-- MUNDO: overworld com árvores, construção e inimigos noturnos -->
+  <div class="screen" id="screen-world">
+    <div class="world-hud">
+      <div style="display:flex; gap:6px;">
+        <button class="world-back-btn" onclick="closeWorld()" aria-label="Voltar">←</button>
+        <button class="world-back-btn" id="worldInventoryBtn" onclick="toggleWorldInventory()" aria-label="Inventário">🎒</button>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="world-hud-pill resource-btn" id="worldBuildWoodBtn" onclick="toggleBuildMode('wood')">🪵 <span id="worldWoodCount">0</span></button>
+        <button class="world-hud-pill resource-btn" id="worldBuildStoneBtn" onclick="toggleBuildMode('stone')">🪨 <span id="worldStoneCount">0</span></button>
+        <div class="world-hud-pill" id="worldAxePill" style="display:none;">🪓</div>
+        <div class="world-hud-pill" id="worldPickaxePill" style="display:none;">⛏️</div>
+        <div class="world-hud-pill" id="worldSwordPill" style="display:none;">🗡️</div>
+        <div class="world-hud-pill"><span class="coin-dot"></span><span id="worldCoinsCount">0</span></div>
+      </div>
+    </div>
+    <div class="world-hud" style="top:56px; justify-content:center; gap:8px;">
+      <div class="world-hud-pill" id="worldCyclePill">☀️ Dia · 7:00</div>
+      <div class="world-hud-pill" id="worldHitsPill" style="display:none; background:rgba(150,20,20,0.55);">💥 <span id="worldHitsCount">0</span>/10</div>
+    </div>
+
+    <!-- Painel de inventário: lista todos os itens que o player já coletou no mundo -->
+    <div class="world-inventory-overlay" id="worldInventoryOverlay" onclick="if(event.target===this) toggleWorldInventory(false)">
+      <div class="world-inventory-panel">
+        <div class="world-inventory-header">
+          <span>🎒 Inventário</span>
+          <button class="world-inventory-close" onclick="toggleWorldInventory(false)" aria-label="Fechar">✕</button>
+        </div>
+        <div class="world-inventory-grid" id="worldInventoryGrid"></div>
+      </div>
+    </div>
+
+    <div class="world-viewport" id="worldViewport">
+      <div class="world-bg-layer world-bg-far" id="worldBgFar"></div>
+      <div class="world-bg-layer world-bg-near" id="worldBgNear"></div>
+      <div class="world-layer" id="worldLayer">
+        <div id="worldEntities"></div>
+        <div id="worldBallsLayer"></div>
+        <div class="world-player" id="worldPlayer">
+          <div class="world-player-shadow"></div>
+          <div id="worldPlayerImg" class="world-player-sprite">
+            <div id="worldPlayerImgInner" class="world-player-sprite-inner"></div>
+            <div id="worldPlayerAxe" class="world-player-axe"></div>
+            <div id="worldPlayerPickaxe" class="world-player-pickaxe"></div>
+            <div id="worldPlayerSword" class="world-player-sword"></div>
+          </div>
+        </div>
+      </div>
+      <div class="world-hit-flash" id="worldHitFlash"></div>
+      <div class="night-overlay" id="worldNightOverlay"></div>
+    </div>
+
+    <div class="world-bottom-bar">
+      <div class="world-joystick-zone" id="worldJoystick"><div class="world-joystick-thumb" id="worldJoystickThumb"></div></div>
+    </div>
+  </div>
+
+  <!-- MENU DE STATUS -->
+  <div class="screen" id="screen-status">
+    <div class="topbar">
+      <div class="pet-id">
+        <div class="eyebrow">Bichinho</div>
+        <div class="name" style="font-size:18px;">Status</div>
+      </div>
+      <button class="btn-secondary" style="padding:8px 16px; font-size:13px;" onclick="closeStatus()">Pronto</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-row">
+        <div class="head"><span>💪 Força</span><span class="val" id="valForca">0</span></div>
+        <div class="bar-track"><div class="bar-fill bar-forca" id="barForca" style="width:0%"></div></div>
+      </div>
+      <div class="stat-row">
+        <div class="head"><span>⚡ Velocidade</span><span class="val" id="valVelocidade">0</span></div>
+        <div class="bar-track"><div class="bar-fill bar-velocidade" id="barVelocidade" style="width:0%"></div></div>
+      </div>
+      <div class="stat-row">
+        <div class="head"><span>🎯 Precisão</span><span class="val" id="valPrecisao">0</span></div>
+        <div class="bar-track"><div class="bar-fill bar-precisao" id="barPrecisao" style="width:0%"></div></div>
+      </div>
+      <div class="stat-row">
+        <div class="head"><span>🛡️ Resistência</span><span class="val" id="valResistencia">0</span></div>
+        <div class="bar-track"><div class="bar-fill bar-resistencia" id="barResistencia" style="width:0%"></div></div>
+      </div>
+      <div class="stat-row">
+        <div class="head"><span>🧠 Inteligência</span><span class="val" id="valInteligencia">0</span></div>
+        <div class="bar-track"><div class="bar-fill bar-inteligencia" id="barInteligencia" style="width:0%"></div></div>
+      </div>
+      <div class="stat-row">
+        <div class="head"><span>🔋 Energia</span><span class="val" id="valEnergia">0</span></div>
+        <div class="bar-track"><div class="bar-fill bar-energia" id="barEnergia" style="width:0%"></div></div>
+      </div>
+      <div class="stat-row">
+        <div class="head"><span>✨ <span id="especialLabel">Especial</span></span><span class="val" id="valEspecial">0</span></div>
+        <div class="bar-track"><div class="bar-fill bar-especial" id="barEspecial" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MENU DE TREINOS -->
+  <div class="screen" id="screen-treinos">
+    <div class="topbar">
+      <div class="pet-id">
+        <div class="eyebrow">Treino</div>
+        <div class="name" style="font-size:18px;">Treinos</div>
+      </div>
+      <button class="btn-secondary" style="padding:8px 16px; font-size:13px;" onclick="closeTreinos()">Pronto</button>
+    </div>
+
+    <div class="section-label">Minigames</div>
+    <div class="train-grid">
+      <button class="train-card" onclick="startMira()">
+        <div class="icon">🎯</div>
+        <div class="title">Mira</div>
+        <div class="sub">Treina Força</div>
+      </button>
+      <button class="train-card" onclick="startDefesa()">
+        <div class="icon">🛡️</div>
+        <div class="title">Defesa</div>
+        <div class="sub">Treina Defesa</div>
+      </button>
+      <button class="train-card" onclick="startEspecial()">
+        <div class="icon">✨</div>
+        <div class="title" id="specialTitle">Especial</div>
+        <div class="sub">Treina Especial</div>
+      </button>
+      <button class="train-card" onclick="startCorrida()">
+        <div class="icon">💨</div>
+        <div class="title">Corrida</div>
+        <div class="sub">Treina Velocidade</div>
+      </button>
+      <button class="train-card" onclick="startCores()">
+        <div class="icon">🎨</div>
+        <div class="title">Cores</div>
+        <div class="sub">Treina Inteligência</div>
+      </button>
+      <button class="train-card" onclick="startPulo()">
+        <div class="icon">🔋</div>
+        <div class="title">Pulo</div>
+        <div class="sub">Treina Energia</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- MENU DE PODERES -->
+  <div class="screen" id="screen-poderes">
+    <div class="topbar">
+      <div class="pet-id">
+        <div class="eyebrow">Duelo</div>
+        <div class="name" style="font-size:18px;">Poderes</div>
+      </div>
+      <button class="btn-secondary" style="padding:8px 16px; font-size:13px;" onclick="closePoderes()">Pronto</button>
+    </div>
+
+    <div class="section-label">Poderes livres <span id="livreCountLbl">0/6</span></div>
+    <div class="poder-grid" id="poderesLivreGrid"></div>
+
+    <div class="section-label" style="margin-top:6px;">Poderes especiais <span id="especialCountLbl">0/2</span></div>
+    <div class="poder-grid" id="poderesEspecialGrid"></div>
+
+    <p style="font-size:11.5px; color:var(--ink-soft); font-weight:700; text-align:center; margin-top:14px;">
+      Toque num poder pra equipar ou tirar do seu time de duelo. Mais poderes chegam em breve!
+    </p>
+  </div>
+
+  <!-- MIRA MINIGAME -->
+  <div class="screen" id="screen-mira">
+    <div class="mira-wrap">
+      <div class="mira-hud">
+        <div>🎯 <span id="miraScore">0</span></div>
+        <div>⏱️ <span id="miraTime">30</span>s</div>
+      </div>
+      <canvas id="miraCanvas"></canvas>
+      <svg id="miraPetSvg" class="mira-pet" viewBox="0 0 200 200"></svg>
+      <div class="mira-instructions" id="miraInstructions">Toque no alvo assim que ele aparecer!</div>
+    </div>
+  </div>
+
+  <!-- DEFESA MINIGAME -->
+  <div class="screen" id="screen-defesa">
+    <div class="mira-wrap">
+      <div class="mira-hud">
+        <div>🛡️ <span id="defesaScore">0</span></div>
+        <div>🚀 Nível <span id="defesaLevelLbl">1</span></div>
+        <div>❤️ <span id="defesaVidas">3</span></div>
+      </div>
+      <canvas id="defesaCanvas"></canvas>
+      <svg id="defesaPetSvg" class="corrida-pet" viewBox="0 0 200 200"></svg>
+      <div class="mira-instructions">Toque na esquerda/direita pra entrar na frente das balas!</div>
+    </div>
+  </div>
+
+  <!-- ESPECIAL MINIGAME -->
+  <div class="screen" id="screen-especial">
+    <div class="mira-wrap">
+      <div class="mira-hud">
+        <div>✨ <span id="especialScore">0</span> / 8</div>
+        <div id="especialFlavor">Carregando...</div>
+      </div>
+      <canvas id="especialCanvas"></canvas>
+      <div class="mira-instructions">Toque quando o marcador estiver na zona clara!</div>
+    </div>
+  </div>
+
+  <!-- CORRIDA MINIGAME -->
+  <div class="screen" id="screen-corrida">
+    <div class="mira-wrap">
+      <div class="mira-hud">
+        <div>💨 <span id="corridaScore">0</span>m</div>
+        <div>🚀 Nível <span id="corridaLevelLbl">1</span></div>
+        <div>❤️ <span id="corridaVidas">3</span></div>
+      </div>
+      <canvas id="corridaCanvas"></canvas>
+      <svg id="corridaPetSvg" class="corrida-pet" viewBox="0 0 200 200"></svg>
+      <div class="mira-instructions">Toque na esquerda ou direita da tela pra mudar de pista!</div>
+    </div>
+  </div>
+
+  <!-- PULO MINIGAME (estilo dino game: pule por cima das pedras do modo mundo) -->
+  <div class="screen" id="screen-pulo">
+    <div class="mira-wrap">
+      <div class="mira-hud">
+        <div>🔋 <span id="puloScoreLbl">0</span>m</div>
+        <div>🚀 Nível <span id="puloLevelLbl">1</span></div>
+        <div>🏆 <span id="puloBestLbl">0</span>m</div>
+      </div>
+      <div class="pulo-stage" id="puloStage">
+        <canvas id="puloCanvas"></canvas>
+        <div id="puloObstacleLayer" style="position:absolute; inset:0; overflow:hidden; pointer-events:none;"></div>
+        <svg id="puloPetSvg" class="pulo-pet" viewBox="0 0 200 200"></svg>
+      </div>
+      <div class="mira-instructions">Toque na tela pra pular por cima das pedras!</div>
+    </div>
+  </div>
+
+  <!-- CORES MINIGAME (2048 de cores) -->
+  <div class="screen" id="screen-cores">
+    <div class="mira-wrap">
+      <div class="mira-hud">
+        <div>🎨 <span id="coresScore">0</span></div>
+        <div>🏆 <span id="coresBest">0</span></div>
+        <div>🔮 Maior: <span id="coresMaxTile">0</span></div>
+      </div>
+      <div class="cores-board" id="coresBoard" aria-label="Tabuleiro de cores"></div>
+      <div class="mira-instructions">Deslize ⬆️⬇️⬅️➡️ pra fundir peças iguais. Tente chegar em 2048!</div>
+    </div>
+  </div>
+
+  <!-- DUELO -->
+  <div class="screen" id="screen-duelo">
+
+    <!-- Passo 0: intro contra a IA -->
+    <div id="duelSetup">
+      <div class="eyebrow" style="color:rgba(255,255,255,0.6);">Duelo</div>
+      <h1 style="font-size:20px;">Duelo contra a IA</h1>
+      <svg id="duelOppPreview" viewBox="0 0 200 200" style="width:110px; height:110px; margin:6px auto;"></svg>
+      <p id="duelOppPreviewName" style="font-size:14px; font-weight:800; margin:0 0 2px;">—</p>
+      <p style="font-size:13px; color:rgba(255,255,255,0.7); font-weight:700; max-width:280px;">Cada rodada, escolha 2 cartas diferentes. A IA escolhe as dela ao mesmo tempo — ninguém vê a jogada do outro até revelar.</p>
+      <button class="btn-primary" onclick="startAiDuel()">Começar duelo</button>
+      <button class="btn-secondary" style="background:rgba(255,255,255,0.12); color:#fff; margin-top:4px;" onclick="closeDuelo()">Cancelar</button>
+    </div>
+
+    <!-- Duelo Online: passo 0 - escolher criar sala ou entrar com QR -->
+    <div id="duelOnlineChoice" style="display:none; flex:1; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:24px;">
+      <div class="eyebrow" style="color:rgba(255,255,255,0.6);">Duelo Online</div>
+      <h1 style="font-size:20px; text-align:center;">Jogue com um amigo</h1>
+      <p style="font-size:13px; color:rgba(255,255,255,0.7); font-weight:700; max-width:280px; text-align:center;">Os dois precisam estar na mesma rede Wi-Fi. Um cria a sala, o outro escaneia o QR code pra entrar.</p>
+      <button class="btn-primary" style="width:220px;" onclick="openOnlineHost()">Criar sala (QR code)</button>
+      <button class="btn-primary" style="width:220px; background:linear-gradient(135deg,#4ADE9E,#2FBE85);" onclick="openOnlineJoin()">Entrar escaneando</button>
+      <button class="btn-secondary" style="background:rgba(255,255,255,0.12); color:#fff; margin-top:4px;" onclick="closeDuelo()">Cancelar</button>
+    </div>
+
+    <!-- Duelo Online: anfitrião - mostra o QR e espera o convidado -->
+    <div id="duelOnlineHostScreen" style="display:none; flex:1; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:24px;">
+      <div class="eyebrow" style="color:rgba(255,255,255,0.6);">Duelo Online</div>
+      <h1 style="font-size:18px; text-align:center;">Peça pro seu amigo escanear</h1>
+      <div id="duelOnlineQr" style="background:#fff; padding:12px; border-radius:16px; min-height:180px; min-width:180px; display:flex; align-items:center; justify-content:center;">
+        <span style="color:#999; font-size:12px;">Gerando QR code…</span>
+      </div>
+      <p id="duelOnlineStatus" style="font-size:13px; color:rgba(255,255,255,0.7); font-weight:700;">Esperando o outro jogador entrar…</p>
+      <button class="btn-secondary" style="background:rgba(255,255,255,0.12); color:#fff; margin-top:4px;" onclick="cancelOnlineSetup()">Cancelar</button>
+    </div>
+
+    <!-- Duelo Online: convidado - câmera pra ler o QR -->
+    <div id="duelOnlineJoinScreen" style="display:none; flex:1; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:24px;">
+      <div class="eyebrow" style="color:rgba(255,255,255,0.6);">Duelo Online</div>
+      <h1 style="font-size:18px; text-align:center;">Aponte a câmera pro QR code</h1>
+      <div id="duelQrReader" style="width:260px; max-width:80vw; border-radius:16px; overflow:hidden;"></div>
+      <p id="duelOnlineJoinStatus" style="font-size:13px; color:rgba(255,255,255,0.7); font-weight:700;">—</p>
+      <div style="display:flex; align-items:center; gap:6px; margin-top:6px; width:260px; max-width:80vw;">
+        <div style="flex:1; height:1px; background:rgba(255,255,255,0.2);"></div>
+        <span style="font-size:11px; color:rgba(255,255,255,0.5); font-weight:800;">ou digite o código</span>
+        <div style="flex:1; height:1px; background:rgba(255,255,255,0.2);"></div>
+      </div>
+      <div style="display:flex; gap:6px; width:260px; max-width:80vw;">
+        <input id="duelManualCode" placeholder="ex: sb1a2b3c" style="flex:1; padding:10px 12px; border-radius:12px; border:none; font-weight:800; font-size:14px;">
+        <button class="btn-primary" style="width:auto; padding:0 16px;" onclick="connectToHost(document.getElementById('duelManualCode').value.trim())">Entrar</button>
+      </div>
+      <button class="btn-secondary" style="background:rgba(255,255,255,0.12); color:#fff; margin-top:4px;" onclick="cancelOnlineSetup()">Cancelar</button>
+    </div>
+
+    <!-- Passo 1: arena + escolha de cartas -->
+    <div id="duelBattle" style="display:none; flex:1; flex-direction:column;">
+      <div class="duel-hud">
+        <div class="duel-opp-pill"><span id="duelOppHpName">Oponente</span></div>
+        <div class="duel-opp-hp-track"><div class="duel-hp-fill" id="duelOppHpFill" style="width:100%"></div></div>
+        <div class="duel-round" id="duelRoundLbl" style="display:none;">Rodada 1</div>
+      </div>
+
+      <div class="duel-arena" id="duelArena">
+        <div class="duel-floor"></div>
+        <div class="duel-opp" id="duelOppSvg"></div>
+        <div class="duel-opp-name" id="duelOppNameTag">—</div>
+        <div class="duel-self" id="duelSelfSvg"></div>
+        <div class="duel-flash" id="duelFlash"></div>
+      </div>
+
+      <div class="duel-panel">
+        <div class="duel-cards" id="duelCards"></div>
+        <div class="duel-self-row">
+          <div class="duel-next-card" id="duelNextCard"></div>
+          <div class="duel-self-info">
+            <div class="duel-self-info-head"><span id="duelSelfHpName">Você</span><span class="num" id="duelSelfHpNum">1000/1000</span></div>
+            <div class="duel-hp-track"><div class="duel-hp-fill" id="duelSelfHpFill" style="width:100%"></div></div>
+            <div class="duel-energy-track"><div class="duel-energy-fill" id="duelSelfEnergyFill" style="width:100%"></div></div>
+          </div>
+        </div>
+        <div class="duel-log" id="duelTurnLbl">Toque num poder pra agir</div>
+        <button class="btn-primary" style="width:100%; display:none;" id="duelConfirmBtn" disabled>Confirmar</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- RESULT MODAL -->
+<div class="overlay-modal" id="resultModal">
+  <div class="modal-card">
+    <h2 id="resultTitle">Treino concluído!</h2>
+    <p id="resultSub">Sua força aumentou.</p>
+    <div class="reward-row">
+      <div class="reward-item"><div class="num" id="rewardStat">+0</div><div class="lbl" id="rewardStatLbl">Força</div></div>
+      <div class="reward-item"><div class="num" id="rewardCoins">+0</div><div class="lbl">Moedas</div></div>
+    </div>
+    <button class="btn-primary" onclick="closeResult()">Continuar</button>
+  </div>
+</div>
+
+<!-- EVOLUTION MODAL -->
+<div class="overlay-modal" id="evoModal">
+  <div class="modal-card">
+    <div class="eyebrow">Seu bichinho evoluiu</div>
+    <h2 class="evo-title" id="evoName">Nova forma!</h2>
+    <svg viewBox="0 0 200 200" style="width:140px; margin:10px auto;" id="evoPreview"></svg>
+    <p id="evoSub">O treino intenso mudou o corpo dele para sempre.</p>
+    <button class="btn-primary" onclick="closeEvo()">Incrível!</button>
+  </div>
+</div>
+
+<!-- DUEL RESULT MODAL -->
+<div class="overlay-modal" id="duelResultModal">
+  <div class="modal-card">
+    <h2 id="duelResultTitle">Vitória!</h2>
+    <p id="duelResultSub">Seu bichinho venceu o duelo.</p>
+    <div class="reward-row" id="duelResultRewardRow">
+      <div class="reward-item"><div class="num" id="duelResultCoins">+0</div><div class="lbl">Moedas</div></div>
+    </div>
+    <button class="btn-primary" onclick="closeDuelResult()">Voltar pra casa</button>
+  </div>
+</div>
+
+<!-- SOON TOAST -->
+<div class="overlay-modal" id="soonModal">
+  <div class="modal-card">
+    <h2>🚧 Em construção</h2>
+    <p>Esse treino ainda está sendo desenvolvido. Volte em breve!</p>
+    <button class="btn-primary" onclick="document.getElementById('soonModal').classList.remove('active')">Ok</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="js/01-core-state.js"></script>
+<script src="js/02-pet-interactions.js"></script>
+<script src="js/03-world.js"></script>
+<script src="js/04-render-core.js"></script>
+<script src="js/05-minigame-mira.js"></script>
+<script src="js/06-evolution-training.js"></script>
+<script src="js/07-minigame-defesa.js"></script>
+<script src="js/08-minigame-especial.js"></script>
+<script src="js/09-minigame-corrida.js"></script>
+<script src="js/10-minigame-pulo.js"></script>
+<script src="js/11-minigame-cores2048.js"></script>
+<script src="js/12-poderes-status.js"></script>
+<script src="js/13-duel-core.js"></script>
+<script src="js/14-duel-online.js"></script>
+<script src="js/15-dev-tools.js"></script>
+</body>
+</html>
