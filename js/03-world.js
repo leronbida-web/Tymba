@@ -693,11 +693,16 @@ function setupWorldGroundTap(){
   });
 }
 
-// remove um bloco de madeira/pedra solto no mapa (que ainda não virou uma casa) ao ser tocado.
-// não devolve pro inventário — o jogador precisa buscar mais madeira/pedra se quiser recolocar.
+// pega de volta um bloco de madeira/pedra solto no mapa (que ainda não virou uma
+// casa/ferramenta) ao ser tocado — devolve o recurso pro inventário. Blocos soltos
+// que não forem recolhidos até a próxima noite somem sozinhos (ver worldLoop).
 function removeLooseBlock(id){
   const w = state.world;
+  const block = w.blocks.find(b => b.id === id);
+  if(!block) return;
   w.blocks = w.blocks.filter(b => b.id !== id);
+  if(block.type === 'wood') w.wood += 1; else w.stone += 1;
+  toast((block.type === 'wood' ? '🪵 Madeira' : '🪨 Pedra') + ' recolhida de volta pro inventário!');
   saveState();
   renderWorldStatic();
 }
@@ -995,7 +1000,7 @@ function worldLoop(ts){
     const before = w.houses.length;
     w.houses = w.houses.filter(h => now < h.expiresAt);
     if(w.houses.length !== before){
-      toast('🏚️ Uma casa nível 1 desmoronou depois de 10 dias.');
+      toast('🏚️ Uma casa nível 1 desmoronou depois de 5 dias.');
       treesChanged = true;
     }
   }
@@ -1032,6 +1037,12 @@ function worldLoop(ts){
       w.nightBoosted = true;
       const extra = Math.round(WORLD_ENEMY_COUNT * WORLD_NIGHT_ENEMY_BONUS_RATIO);
       w.enemies = w.enemies.concat(genWorldEnemies(extra, 'en'));
+      // blocos soltos de madeira/pedra que não foram recolhidos até a noite somem —
+      // casas e outras construções já viradas não são afetadas (não ficam em w.blocks)
+      if(w.blocks.length > 0){
+        w.blocks = [];
+        toast('🌙 A noite chegou e os itens soltos no chão sumiram!');
+      }
       treesChanged = true;
     }
   }
