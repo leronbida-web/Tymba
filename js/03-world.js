@@ -2,11 +2,11 @@
 // (ex: picareta), basta acrescentar uma entrada aqui — o painel se atualiza sozinho.
 // get(w) retorna a quantidade (ou 1/0 pra itens únicos tipo ferramentas via 'owned').
 const WORLD_INVENTORY_ITEMS = [
-  { key:'wood', icon:'🪵', label:'Madeira', get:(w) => w.wood || 0 },
-  { key:'stone', icon:'🪨', label:'Pedra', get:(w) => w.stone || 0 },
-  { key:'axe', icon:'🪓', label:'Machado', owned:(w) => !!w.hasAxe },
-  { key:'pickaxe', icon:'⛏️', label:'Picareta', owned:(w) => !!w.hasPickaxe },
-  { key:'sword', icon:'🗡️', label:'Espada', owned:(w) => !!w.hasSword },
+  { key:'wood', icon:'🪵', label:'Madeira', type:'resource', get:(w) => w.wood || 0 },
+  { key:'stone', icon:'🪨', label:'Pedra', type:'resource', get:(w) => w.stone || 0 },
+  { key:'axe', icon:'🪓', label:'Machado', type:'tool', owned:(w) => !!w.hasAxe },
+  { key:'pickaxe', icon:'⛏️', label:'Picareta', type:'tool', owned:(w) => !!w.hasPickaxe },
+  { key:'sword', icon:'🗡️', label:'Espada', type:'tool', owned:(w) => !!w.hasSword },
 ];
 
 function renderWorldInventory(){
@@ -15,18 +15,48 @@ function renderWorldInventory(){
   const w = state.world;
   if(!w){ grid.innerHTML = ''; return; }
   const cards = WORLD_INVENTORY_ITEMS.map(item => {
-    const isTool = typeof item.owned === 'function';
+    const isTool = item.type === 'tool';
     const owned = isTool ? item.owned(w) : (item.get(w) > 0);
     const countHtml = isTool
       ? (owned ? '✓' : '—')
       : String(item.get(w));
-    return '<div class="world-inventory-item' + (owned ? '' : ' is-empty') + '">' +
+    const isSelected = isTool ? (w.equippedTool === item.key) : (worldBuildMode === item.key);
+    const classes = 'world-inventory-item' + (owned ? '' : ' is-empty') + (isSelected ? ' is-selected' : '');
+    return '<div class="' + classes + '" onclick="selectWorldInventoryItem(\'' + item.key + '\')">' +
       '<div class="world-inventory-item-icon">' + item.icon + '</div>' +
       '<div class="world-inventory-item-count">' + countHtml + '</div>' +
       '<div class="world-inventory-item-label">' + item.label + '</div>' +
     '</div>';
   }).join('');
   grid.innerHTML = cards || '<div class="world-inventory-empty-msg">Nenhum item ainda. Explore o mundo pra coletar!</div>';
+}
+
+// chamada ao tocar num item do inventário: ferramenta vai pra mão do player
+// (substitui a que já estava equipada) e recurso (madeira/pedra) ativa o modo
+// de construção com aquele material — sempre fecha o inventário em seguida.
+function selectWorldInventoryItem(key){
+  const w = state.world;
+  if(!w) return;
+  const item = WORLD_INVENTORY_ITEMS.find(i => i.key === key);
+  if(!item) return;
+
+  if(item.type === 'tool'){
+    if(!item.owned(w)){ toast('Você ainda não construiu esse item.'); return; }
+    w.equippedTool = key;
+    toggleBuildMode(null);
+    toast(item.icon + ' ' + item.label + ' equipada!');
+  } else {
+    if(item.get(w) <= 0){ toast('Sem ' + item.label.toLowerCase() + ' suficiente.'); return; }
+    w.equippedTool = null; // solta a ferramenta pra segurar o material de construção
+    toggleBuildMode(key);
+    toast(item.icon + ' ' + item.label + ' selecionada! Toque no chão pra construir.');
+  }
+  saveState();
+  updateWorldAxeVisual();
+  updateWorldPickaxeVisual();
+  updateWorldSwordVisual();
+  updateWorldHandPill();
+  toggleWorldInventory(false);
 }
 
 function toggleWorldInventory(force){
@@ -345,6 +375,7 @@ function renderWorldStatic(){
   updateWorldAxeVisual();
   updateWorldPickaxeVisual();
   updateWorldSwordVisual();
+  updateWorldHandPill();
 }
 
 function chopTree(id){
@@ -387,14 +418,13 @@ function swingPlayerAxe(){
   axeEl.classList.add('swing');
 }
 
-// mostra/esconde o machado na mão do player e o indicador no HUD, conforme a ferramenta equipada
+// mostra/esconde o machado na mão do player, conforme a ferramenta equipada
+// (o indicador único do HUD é atualizado à parte por updateWorldHandPill())
 function updateWorldAxeVisual(){
   const w = state.world;
   const has = !!(w && w.equippedTool === 'axe');
   const axeEl = document.getElementById('worldPlayerAxe');
   if(axeEl) axeEl.classList.toggle('show', has);
-  const pill = document.getElementById('worldAxePill');
-  if(pill) pill.style.display = has ? 'flex' : 'none';
 }
 
 // balança a picareta na mão do player (feedback visual de cada golpe na rocha)
@@ -406,14 +436,12 @@ function swingPlayerPickaxe(){
   pickEl.classList.add('swing');
 }
 
-// mostra/esconde a picareta na mão do player e o indicador no HUD, conforme a ferramenta equipada
+// mostra/esconde a picareta na mão do player, conforme a ferramenta equipada
 function updateWorldPickaxeVisual(){
   const w = state.world;
   const has = !!(w && w.equippedTool === 'pickaxe');
   const pickEl = document.getElementById('worldPlayerPickaxe');
   if(pickEl) pickEl.classList.toggle('show', has);
-  const pill = document.getElementById('worldPickaxePill');
-  if(pill) pill.style.display = has ? 'flex' : 'none';
 }
 
 // balança a espada na mão do player (feedback visual de cada abate)
@@ -425,14 +453,12 @@ function swingPlayerSword(){
   swordEl.classList.add('swing');
 }
 
-// mostra/esconde a espada na mão do player e o indicador no HUD, conforme a ferramenta equipada
+// mostra/esconde a espada na mão do player, conforme a ferramenta equipada
 function updateWorldSwordVisual(){
   const w = state.world;
   const has = !!(w && w.equippedTool === 'sword');
   const swordEl = document.getElementById('worldPlayerSword');
   if(swordEl) swordEl.classList.toggle('show', has);
-  const pill = document.getElementById('worldSwordPill');
-  if(pill) pill.style.display = has ? 'flex' : 'none';
 }
 
 function tapRock(id){
@@ -603,10 +629,23 @@ function engageWorldEnemy(id){
 }
 
 let worldBuildMode = null;
+// define o modo de construção atual ('wood' | 'stone' | null). Chamada pelo
+// inventário quando o player toca em madeira/pedra pra usar, ou com null pra soltar.
 function toggleBuildMode(type){
-  worldBuildMode = worldBuildMode === type ? null : type;
-  document.getElementById('worldBuildWoodBtn').classList.toggle('active', worldBuildMode === 'wood');
-  document.getElementById('worldBuildStoneBtn').classList.toggle('active', worldBuildMode === 'stone');
+  worldBuildMode = type;
+  updateWorldHandPill();
+}
+
+// atualiza o indicador único do HUD que mostra o que está na mão do player
+// (ferramenta equipada ou material selecionado pra construção)
+function updateWorldHandPill(){
+  const w = state.world;
+  const iconEl = document.getElementById('worldHandIcon');
+  if(!iconEl || !w) return;
+  const toolItem = WORLD_INVENTORY_ITEMS.find(i => i.type === 'tool' && i.key === w.equippedTool);
+  const resourceItem = WORLD_INVENTORY_ITEMS.find(i => i.type === 'resource' && i.key === worldBuildMode);
+  const active = toolItem || resourceItem;
+  iconEl.textContent = active ? active.icon : 'vazio';
 }
 
 function isCellInsideAnyHouse(w, gx, gy){
@@ -720,8 +759,7 @@ function tryBuildAxe(w, placedGx, placedGy){
       w.blocks = w.blocks.filter(b => !(b.gx === gx && b.gy === gy));
     });
     w.hasAxe = true;
-    w.equippedTool = 'axe';
-    toast('🪓 Machado criado! Agora as árvores caem em só 2 golpes.');
+    toast('🪓 Machado criado! Abra o inventário 🎒 pra equipar.');
     return;
   }
 }
@@ -749,12 +787,7 @@ function tryBuildPickaxe(w, placedGx, placedGy){
       w.blocks = w.blocks.filter(b => !(b.gx === gx && b.gy === gy));
     });
     w.hasPickaxe = true;
-    // já tinha machado na mão? ele fica guardado no inventário (a picareta assume a mão)
-    const hadAxeEquipped = w.equippedTool === 'axe';
-    w.equippedTool = 'pickaxe';
-    toast(hadAxeEquipped
-      ? '⛏️ Picareta criada! O machado foi para o inventário. Agora as pedras quebram em só 5 toques.'
-      : '⛏️ Picareta criada! Agora as pedras quebram em só 5 toques.');
+    toast('⛏️ Picareta criada! Abra o inventário 🎒 pra equipar.');
     return;
   }
 }
@@ -782,8 +815,7 @@ function tryBuildSword(w, placedGx, placedGy){
       w.blocks = w.blocks.filter(b => !(b.gx === gx && b.gy === gy));
     });
     w.hasSword = true;
-    w.equippedTool = 'sword';
-    toast('🗡️ Espada criada! Agora você pode abater bichinhos selvagens com 1 golpe.');
+    toast('🗡️ Espada criada! Abra o inventário 🎒 pra equipar.');
     return;
   }
 }
@@ -1116,8 +1148,6 @@ function worldLoop(ts){
   playerEl.style.top = w.y + 'px';
   playerEl.style.zIndex = Math.round(w.y);
 
-  document.getElementById('worldWoodCount').textContent = w.wood;
-  document.getElementById('worldStoneCount').textContent = w.stone;
   document.getElementById('worldCoinsCount').textContent = state.coins;
   const invOverlay = document.getElementById('worldInventoryOverlay');
   if(invOverlay && invOverlay.classList.contains('open')) renderWorldInventory();

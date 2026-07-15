@@ -796,8 +796,10 @@
   .world-inventory-header{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; font-weight:800; font-size:15.5px; color:#2A2A2A; border-bottom:1px solid #EFEFEF; flex-shrink:0; }
   .world-inventory-close{ border:none; background:#F2F2F4; color:#888; width:28px; height:28px; border-radius:50%; font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
   .world-inventory-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:14px; overflow-y:auto; }
-  .world-inventory-item{ display:flex; flex-direction:column; align-items:center; gap:4px; background:#F7F7FA; border-radius:14px; padding:12px 6px 10px; text-align:center; }
-  .world-inventory-item.is-empty{ opacity:0.38; }
+  .world-inventory-hint{ font-size:11.5px; color:#8A8A8E; text-align:center; margin:-4px 0 10px; }
+  .world-inventory-item{ display:flex; flex-direction:column; align-items:center; gap:4px; background:#F7F7FA; border-radius:14px; padding:12px 6px 10px; text-align:center; border:2px solid transparent; cursor:pointer; }
+  .world-inventory-item.is-empty{ opacity:0.38; cursor:default; }
+  .world-inventory-item.is-selected{ border-color:#FFD65C; background:#FFF6DC; }
   .world-inventory-item-icon{ font-size:26px; line-height:1; }
   .world-inventory-item-count{ font-weight:800; font-size:13px; color:#2A2A2A; }
   .world-inventory-item-label{ font-size:10.5px; font-weight:600; color:#8A8A8E; }

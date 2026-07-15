@@ -97,11 +97,7 @@
         <button class="world-back-btn" id="worldInventoryBtn" onclick="toggleWorldInventory()" aria-label="Inventário">🎒</button>
       </div>
       <div style="display:flex; gap:6px;">
-        <button class="world-hud-pill resource-btn" id="worldBuildWoodBtn" onclick="toggleBuildMode('wood')">🪵 <span id="worldWoodCount">0</span></button>
-        <button class="world-hud-pill resource-btn" id="worldBuildStoneBtn" onclick="toggleBuildMode('stone')">🪨 <span id="worldStoneCount">0</span></button>
-        <div class="world-hud-pill" id="worldAxePill" style="display:none;">🪓</div>
-        <div class="world-hud-pill" id="worldPickaxePill" style="display:none;">⛏️</div>
-        <div class="world-hud-pill" id="worldSwordPill" style="display:none;">🗡️</div>
+        <button class="world-hud-pill resource-btn" id="worldHandPill" onclick="toggleWorldInventory()">✋ <span id="worldHandIcon">vazio</span></button>
         <div class="world-hud-pill"><span class="coin-dot"></span><span id="worldCoinsCount">0</span></div>
       </div>
     </div>
@@ -117,6 +113,7 @@
           <span>🎒 Inventário</span>
           <button class="world-inventory-close" onclick="toggleWorldInventory(false)" aria-label="Fechar">✕</button>
         </div>
+        <div class="world-inventory-hint">Toque num item pra colocar na mão</div>
         <div class="world-inventory-grid" id="worldInventoryGrid"></div>
       </div>
     </div>
