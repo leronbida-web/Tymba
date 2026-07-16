@@ -1197,11 +1197,13 @@ function worldLoop(ts){
     }
   } else {
     // DE NOITE: inimigos vagam livremente e, se o player chegar perto, param e atacam
-    // com bolinhas da cor do elemento, em vez de fugir
+    // com bolinhas da cor do elemento, em vez de fugir — a menos que o player esteja
+    // dentro da área segura de uma casa, aí eles não conseguem mirar nele
+    const playerProtected = isNearAnyHouse(w, w.x, w.y);
     for(const e of w.enemies){
       if(!e.alive) continue;
       const distToPlayer = Math.hypot(w.x - e.x, w.y - e.y);
-      const aggro = distToPlayer < WORLD_NIGHT_SIGHT_RADIUS;
+      const aggro = distToPlayer < WORLD_NIGHT_SIGHT_RADIUS && !playerProtected;
       let moving = false;
       if(aggro){
         // parado, encarando o player, atacando em intervalos
