@@ -130,7 +130,9 @@ function toggleWorldGuide(force){
   if(shouldOpen) renderWorldGuide();
 }
 
-// clique no ancião: só abre o diálogo se o player estiver perto o suficiente
+// clique no ancião: só abre o diálogo se o player estiver perto o suficiente.
+// se a casa já foi construída e o jogador ainda não viu o aviso sobre os perigos
+// mais fortes, marca como visto e mostra a segunda fala (em vez da de boas-vindas).
 function tapWorldElder(){
   const w = state.world;
   if(!w) return;
@@ -139,7 +141,11 @@ function tapWorldElder(){
     return;
   }
   w.hasMetElder = true;
+  if(w.hasBuiltHouse && !w.hasSeenElderSecondMessage){
+    w.hasSeenElderSecondMessage = true;
+  }
   saveState();
+  renderElderDialog();
   toggleWorldElderDialog(true);
 }
 
@@ -148,6 +154,35 @@ function toggleWorldElderDialog(force){
   if(!overlay) return;
   const shouldOpen = (force === undefined) ? !overlay.classList.contains('open') : !!force;
   overlay.classList.toggle('open', shouldOpen);
+}
+
+// textos das duas falas do ancião. Centralizados aqui pra ficar fácil ajustar a redação sem
+// ter que caçar em HTML/JS espalhado.
+const ELDER_WELCOME_TEXT = 'Bem vindo jovem, que bom vê-lo por aqui. Essas terras são lindas essa época do ano, mas muito cuidado à noite os Tymbas ficam agressivos, construa uma casa para se proteger. Ferramentas serão muito úteis, pegue esse pergaminho:';
+const ELDER_DANGER_TEXT = 'Muito bem, mas tem coisas muito mais perigosas que Tymbas selvagens por aqui, faça uma espada e uma armadura para se defender e um pouco de luz para a noite seria muito útil também';
+
+// troca o conteúdo do diálogo do ancião de acordo com o estado do mundo:
+// - antes da 1ª casa construída (ou depois do 2º aviso já lido): mensagem de boas-vindas + botão "Abrir guia"
+// - depois da 1ª casa construída e antes do 2º aviso ter sido lido: aviso sobre perigos + botão "Vou me preparar" (só fecha)
+function renderElderDialog(){
+  const w = state.world;
+  const text = document.getElementById('worldElderText');
+  const btn = document.getElementById('worldElderBtn');
+  if(!text || !btn) return;
+  const showDanger = !!(w && w.hasBuiltHouse && !w.hasSeenElderSecondMessage);
+  const icon = btn.querySelector('.icon');
+  const label = btn.querySelector('.label');
+  if(showDanger){
+    text.textContent = ELDER_DANGER_TEXT;
+    if(icon) icon.textContent = '💪';
+    if(label) label.textContent = 'Vou me preparar';
+    btn.onclick = () => toggleWorldElderDialog(false);
+  } else {
+    text.textContent = ELDER_WELCOME_TEXT;
+    if(icon) icon.textContent = '📜';
+    if(label) label.textContent = 'Abrir guia';
+    btn.onclick = () => { toggleWorldElderDialog(false); toggleWorldGuide(true); };
+  }
 }
 
 function worldGridKey(gx, gy){ return gx + '_' + gy; }
@@ -240,6 +275,8 @@ function ensureWorldState(){
       hasSword: false,
       equippedTool: null, // 'axe' | 'pickaxe' | 'sword' | null — ferramenta atualmente na mão do player
       hasMetElder: false, // controla se o diálogo de boas-vindas do ancião já abriu sozinho uma vez
+      hasBuiltHouse: false, // quando vira true, a ponta do cajado do ancião passa a brilhar (sinaliza que tem mais conversa)
+      hasSeenElderSecondMessage: false, // one-shot: marca se o ancião já deu o aviso sobre os perigos mais fortes
       trees: genWorldTrees(),
       rocks: genWorldRocks(),
       blocks: [],
@@ -325,6 +362,16 @@ function ensureWorldState(){
     // migração: saves antigos já exploraram o mundo, então não precisam ver o
     // diálogo de boas-vindas abrir sozinho (mas o ancião continua clicável)
     w.hasMetElder = true;
+    migrated = true;
+  }
+  if(w.hasBuiltHouse === undefined){
+    // migração: quem já jogou antes e construiu casa liga o brilho do cajado direto
+    w.hasBuiltHouse = !!(w.houses && w.houses.length);
+    migrated = true;
+  }
+  if(w.hasSeenElderSecondMessage === undefined){
+    // migração: o aviso novo do ancião ainda não foi lido por ninguém (entra como false pra permitir a 1ª vez)
+    w.hasSeenElderSecondMessage = false;
     migrated = true;
   }
   if(migrated) saveState();
@@ -455,7 +502,11 @@ function renderWorldStatic(){
   elderEl.style.left = WORLD_ELDER_POS.x + 'px';
   elderEl.style.top = WORLD_ELDER_POS.y + 'px';
   elderEl.style.zIndex = Math.round(WORLD_ELDER_POS.y);
-  elderEl.innerHTML = '<img src="' + WORLD_ELDER_SPRITE + '" alt="Ancião"><div class="world-elder-glow"></div>';
+  // a div do brilho da ponta do cajado fica sempre no DOM (display:none por padrão no CSS),
+  // e a classe .on é adicionada quando a casa já foi construída — assim o brilho aparece na hora
+  // logo depois do build, sem precisar esperar o próximo re-render completo do mundo
+  const staffGlow = '<div class="world-elder-staff-glow' + (w.hasBuiltHouse ? ' on' : '') + '"></div>';
+  elderEl.innerHTML = '<img src="' + WORLD_ELDER_SPRITE + '" alt="Ancião"><div class="world-elder-glow"></div>' + staffGlow;
   elderEl.onclick = (ev) => { ev.stopPropagation(); tapWorldElder(); };
   entities.appendChild(elderEl);
 
@@ -785,8 +836,12 @@ function setupWorldGroundTap(){
     }
     if(worldBuildMode === 'wood') w.wood -= 1; else w.stone -= 1;
     w.blocks.push({ id:'b'+Date.now(), x: worldX, y: worldY, gx, gy, type: worldBuildMode });
+    const housesBefore = w.houses.length;
     if(worldBuildMode === 'wood') tryBuildHouse(w, gx, gy);
     if(worldBuildMode === 'stone') tryBuildStoneHouse(w, gx, gy);
+    // 1ª casa construída do save: marca o flag pra acender o brilho do cajado do ancião.
+    // (o flag persiste, então o brilho continua valendo mesmo se a casa desmoronar depois)
+    if(w.houses.length > housesBefore && !w.hasBuiltHouse){ w.hasBuiltHouse = true; }
     if(!w.hasAxe) tryBuildAxe(w, gx, gy);
     if(!w.hasPickaxe) tryBuildPickaxe(w, gx, gy);
     if(!w.hasSword) tryBuildSword(w, gx, gy);
@@ -1120,10 +1175,13 @@ function worldLoop(ts){
   }
 
   // ancião: na primeiríssima visita, o diálogo de boas-vindas abre sozinho
-  // quando o player chega bem perto (depois disso só abre se ele clicar)
+  // quando o player chega bem perto (depois disso só abre se ele clicar).
+  // usa renderElderDialog() pra escolher entre boas-vindas e a 2ª fala (caso o save
+  // já tenha casa construída e ainda não viu o aviso).
   if(!w.hasMetElder && Math.hypot(w.x - WORLD_ELDER_POS.x, w.y - WORLD_ELDER_POS.y) <= WORLD_ELDER_AUTO_RADIUS){
     w.hasMetElder = true;
     saveState();
+    renderElderDialog();
     toggleWorldElderDialog(true);
   }
 

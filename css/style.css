@@ -723,6 +723,12 @@
   .world-elder img{ width:100%; height:100%; object-fit:contain; pointer-events:none; }
   .world-elder-glow{ position:absolute; left:50%; bottom:-4px; width:36px; height:12px; transform:translateX(-50%); background:radial-gradient(ellipse at center, rgba(255,214,92,0.55) 0%, rgba(255,214,92,0) 75%); animation:worldElderPulse 1.8s ease-in-out infinite; }
   @keyframes worldElderPulse{ 0%,100%{ opacity:0.5; } 50%{ opacity:1; } }
+  /* brilho na ponta do cajado do ancião. Padrão posiciona no canto superior-direito da sprite
+     (caso comum de cajado na mão direita levantado). Se a sprite tiver o cajado em outro canto,
+     só ajustar os valores de right/top aqui embaixo. Sem a classe .on, fica invisível. */
+  .world-elder-staff-glow{ position:absolute; right:4px; top:-2px; width:24px; height:24px; border-radius:50%; background:radial-gradient(circle, rgba(255,236,150,0.95) 0%, rgba(255,200,80,0.6) 35%, rgba(255,180,50,0) 70%); pointer-events:none; opacity:0; transform:scale(0.8); }
+  .world-elder-staff-glow.on{ animation:worldElderStaffGlow 1.6s ease-in-out infinite; }
+  @keyframes worldElderStaffGlow{ 0%,100%{ transform:scale(0.85); opacity:0.75; } 50%{ transform:scale(1.2); opacity:1; } }
   .world-elder-panel{ text-align:center; padding:0 18px 18px; }
   .world-elder-portrait{ width:96px; height:96px; margin:6px auto 12px; }
   .world-elder-portrait img{ width:100%; height:100%; object-fit:contain; }
