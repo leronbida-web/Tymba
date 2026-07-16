@@ -719,6 +719,17 @@
   .world-block.wood{ background:#A9713F; border:3px solid #7A4E28; }
   .world-block.stone{ background:#9AA0A6; border:3px solid #6B7075; }
   .world-house{ position:absolute; filter:drop-shadow(0 6px 10px rgba(0,0,0,0.3)); pointer-events:none; }
+  .world-elder{ position:absolute; width:70px; height:70px; transform:translate(-50%,-70%); cursor:pointer; filter:drop-shadow(0 6px 8px rgba(0,0,0,0.45)); }
+  .world-elder img{ width:100%; height:100%; object-fit:contain; pointer-events:none; }
+  .world-elder-glow{ position:absolute; left:50%; bottom:-4px; width:36px; height:12px; transform:translateX(-50%); background:radial-gradient(ellipse at center, rgba(255,214,92,0.55) 0%, rgba(255,214,92,0) 75%); animation:worldElderPulse 1.8s ease-in-out infinite; }
+  @keyframes worldElderPulse{ 0%,100%{ opacity:0.5; } 50%{ opacity:1; } }
+  .world-elder-panel{ text-align:center; padding:0 18px 18px; }
+  .world-elder-portrait{ width:96px; height:96px; margin:6px auto 12px; }
+  .world-elder-portrait img{ width:100%; height:100%; object-fit:contain; }
+  .world-elder-text{ font-size:13.5px; line-height:1.55; color:#3A3A3A; margin-bottom:16px; }
+  .world-elder-scroll-btn{ display:flex; flex-direction:column; align-items:center; gap:4px; margin:0 auto; border:none; background:none; cursor:pointer; padding:8px; }
+  .world-elder-scroll-btn .icon{ font-size:34px; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.25)); }
+  .world-elder-scroll-btn .label{ font-size:10.5px; font-weight:800; color:#8A5A2E; text-transform:uppercase; letter-spacing:0.3px; }
   .world-enemy{ position:absolute; width:64px; height:64px; transform:translate(-50%,-60%); cursor:pointer; filter:drop-shadow(0 6px 8px rgba(0,0,0,0.45)); }
   .world-enemy-sprite{ position:absolute; inset:0; }
   .world-enemy-sprite.flip{ transform:scaleX(-1); }

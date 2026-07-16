@@ -129,3 +129,9 @@ const WORLD_NIGHT_BALL_SPEED = 150; // px/s — dá pra desviar andando
 const WORLD_PLAYER_HIT_RADIUS = 20; // raio de colisão da bolinha com o player
 const WORLD_PLAYER_MAX_HITS = 10; // quantidade de bolinhas até "morrer"
 
+// ---- Ancião: NPC fixo próximo ao centro do mapa, dá as boas-vindas na primeira visita ----
+const WORLD_ELDER_POS = { x: Math.round(WORLD_WIDTH/2) + 150, y: Math.round(WORLD_HEIGHT/2) - 60 };
+const WORLD_ELDER_SPRITE = 'https://i.imgur.com/C0iXsK7.png';
+const WORLD_ELDER_TALK_RADIUS = 100; // clique só funciona até essa distância
+const WORLD_ELDER_AUTO_RADIUS = 130; // chegando bem perto, o diálogo abre sozinho (só na 1ª vez)
+

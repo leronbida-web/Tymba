@@ -130,6 +130,26 @@ function toggleWorldGuide(force){
   if(shouldOpen) renderWorldGuide();
 }
 
+// clique no ancião: só abre o diálogo se o player estiver perto o suficiente
+function tapWorldElder(){
+  const w = state.world;
+  if(!w) return;
+  if(Math.hypot(w.x - WORLD_ELDER_POS.x, w.y - WORLD_ELDER_POS.y) > WORLD_ELDER_TALK_RADIUS){
+    toast('Chegue mais perto do ancião!');
+    return;
+  }
+  w.hasMetElder = true;
+  saveState();
+  toggleWorldElderDialog(true);
+}
+
+function toggleWorldElderDialog(force){
+  const overlay = document.getElementById('worldElderOverlay');
+  if(!overlay) return;
+  const shouldOpen = (force === undefined) ? !overlay.classList.contains('open') : !!force;
+  overlay.classList.toggle('open', shouldOpen);
+}
+
 function worldGridKey(gx, gy){ return gx + '_' + gy; }
 function worldBlocksGridMap(blocks){
   const map = {};
@@ -219,6 +239,7 @@ function ensureWorldState(){
       hasPickaxe: false,
       hasSword: false,
       equippedTool: null, // 'axe' | 'pickaxe' | 'sword' | null — ferramenta atualmente na mão do player
+      hasMetElder: false, // controla se o diálogo de boas-vindas do ancião já abriu sozinho uma vez
       trees: genWorldTrees(),
       rocks: genWorldRocks(),
       blocks: [],
@@ -298,6 +319,12 @@ function ensureWorldState(){
   if(w.equippedTool === undefined){
     // migração: saves antigos já com machado craftado continuam com ele equipado na mão
     w.equippedTool = w.hasAxe ? 'axe' : null;
+    migrated = true;
+  }
+  if(w.hasMetElder === undefined){
+    // migração: saves antigos já exploraram o mundo, então não precisam ver o
+    // diálogo de boas-vindas abrir sozinho (mas o ancião continua clicável)
+    w.hasMetElder = true;
     migrated = true;
   }
   if(migrated) saveState();
@@ -422,6 +449,15 @@ function renderWorldStatic(){
     el.innerHTML = worldHouseSvg(h.type, h.level);
     entities.appendChild(el);
   });
+
+  const elderEl = document.createElement('div');
+  elderEl.className = 'world-elder';
+  elderEl.style.left = WORLD_ELDER_POS.x + 'px';
+  elderEl.style.top = WORLD_ELDER_POS.y + 'px';
+  elderEl.style.zIndex = Math.round(WORLD_ELDER_POS.y);
+  elderEl.innerHTML = '<img src="' + WORLD_ELDER_SPRITE + '" alt="Ancião"><div class="world-elder-glow"></div>';
+  elderEl.onclick = (ev) => { ev.stopPropagation(); tapWorldElder(); };
+  entities.appendChild(elderEl);
 
   w.enemies.filter(e => e.alive).forEach(e => {
     const el = document.createElement('div');
@@ -1035,6 +1071,7 @@ function closeWorld(){
   worldRAF = null;
   saveState();
   toggleWorldInventory(false);
+  toggleWorldElderDialog(false);
   document.getElementById('screen-world').classList.remove('active');
   document.getElementById('screen-home').classList.add('active');
   renderHome();
@@ -1080,6 +1117,14 @@ function worldLoop(ts){
   } else {
     const innerEl = document.getElementById('worldPlayerImgInner');
     if(innerEl) innerEl.classList.remove('walking');
+  }
+
+  // ancião: na primeiríssima visita, o diálogo de boas-vindas abre sozinho
+  // quando o player chega bem perto (depois disso só abre se ele clicar)
+  if(!w.hasMetElder && Math.hypot(w.x - WORLD_ELDER_POS.x, w.y - WORLD_ELDER_POS.y) <= WORLD_ELDER_AUTO_RADIUS){
+    w.hasMetElder = true;
+    saveState();
+    toggleWorldElderDialog(true);
   }
 
   const now = Date.now();
