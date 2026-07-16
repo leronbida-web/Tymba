@@ -141,11 +141,14 @@ function tapWorldElder(){
     return;
   }
   w.hasMetElder = true;
-  if(w.hasBuiltHouse && !w.hasSeenElderSecondMessage){
+  // decide ANTES de mutar o estado qual fala mostrar — se marcasse hasSeenElderSecondMessage=true
+  // antes do render, o renderizador leria o flag já alterado e cairia no "else" (boas-vindas) de novo
+  const showDanger = !!(w.hasBuiltHouse && !w.hasSeenElderSecondMessage);
+  if(showDanger){
     w.hasSeenElderSecondMessage = true;
   }
   saveState();
-  renderElderDialog();
+  renderElderDialog(showDanger);
   toggleWorldElderDialog(true);
 }
 
@@ -161,15 +164,19 @@ function toggleWorldElderDialog(force){
 const ELDER_WELCOME_TEXT = 'Bem vindo jovem, que bom vê-lo por aqui. Essas terras são lindas essa época do ano, mas muito cuidado à noite os Tymbas ficam agressivos, construa uma casa para se proteger. Ferramentas serão muito úteis, pegue esse pergaminho:';
 const ELDER_DANGER_TEXT = 'Muito bem, mas tem coisas muito mais perigosas que Tymbas selvagens por aqui, faça uma espada e uma armadura para se defender e um pouco de luz para a noite seria muito útil também';
 
-// troca o conteúdo do diálogo do ancião de acordo com o estado do mundo:
+// troca o conteúdo do diálogo do ancião de acordo com o estado do mundo.
+// aceita `forceDanger` (opcional) pra forçar uma das falas sem depender do estado — útil
+// quando o caller já sabe qual fala quer mostrar e acabou de mutar flags que confundiriam a leitura.
 // - antes da 1ª casa construída (ou depois do 2º aviso já lido): mensagem de boas-vindas + botão "Abrir guia"
 // - depois da 1ª casa construída e antes do 2º aviso ter sido lido: aviso sobre perigos + botão "Vou me preparar" (só fecha)
-function renderElderDialog(){
+function renderElderDialog(forceDanger){
   const w = state.world;
   const text = document.getElementById('worldElderText');
   const btn = document.getElementById('worldElderBtn');
   if(!text || !btn) return;
-  const showDanger = !!(w && w.hasBuiltHouse && !w.hasSeenElderSecondMessage);
+  const showDanger = forceDanger !== undefined
+    ? !!forceDanger
+    : !!(w && w.hasBuiltHouse && !w.hasSeenElderSecondMessage);
   const icon = btn.querySelector('.icon');
   const label = btn.querySelector('.label');
   if(showDanger){
