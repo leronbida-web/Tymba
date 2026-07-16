@@ -1,13 +1,31 @@
 // Catálogo de itens do inventário do mundo. Pra adicionar um item novo no futuro
 // (ex: picareta), basta acrescentar uma entrada aqui — o painel se atualiza sozinho.
 // get(w) retorna a quantidade (ou 1/0 pra itens únicos tipo ferramentas via 'owned').
+// 'material' é um tipo novo pra itens dropados por inimigos: contam no inventário mas
+// ainda não viram receita de craft (clicar só dá um toast explicando).
 const WORLD_INVENTORY_ITEMS = [
   { key:'wood', icon:'🪵', label:'Madeira', type:'resource', get:(w) => w.wood || 0 },
   { key:'stone', icon:'🪨', label:'Pedra', type:'resource', get:(w) => w.stone || 0 },
   { key:'axe', icon:'🪓', label:'Machado', type:'tool', owned:(w) => !!w.hasAxe },
   { key:'pickaxe', icon:'⛏️', label:'Picareta', type:'tool', owned:(w) => !!w.hasPickaxe },
   { key:'sword', icon:'🗡️', label:'Espada', type:'tool', owned:(w) => !!w.hasSword },
+  // materiais dropados por Tymbas selvagens (sprite/ícone placeholder — depois trocamos
+  // pelo sprite real quando existirem): ar=algodão, fogo=fósforo, água=cera, terra=minério de ferro
+  { key:'cotton',  icon:'🧶', label:'Algodão',         type:'material', get:(w) => w.cotton  || 0 },
+  { key:'match',   icon:'🔥', label:'Fósforo',         type:'material', get:(w) => w.match   || 0 },
+  { key:'wax',     icon:'🕯️', label:'Cera',            type:'material', get:(w) => w.wax     || 0 },
+  { key:'ironOre', icon:'⛓️', label:'Minério de Ferro', type:'material', get:(w) => w.ironOre || 0 },
 ];
+
+// Tabela de drops por elemento: cada Tymba selvagem abatido com a espada dropa 1
+// material de acordo com o elemento dele. As chaves batem com `e.element` (fogo/agua/ar/terra).
+// O label aqui é só pro toast — o item em si já vem do WORLD_INVENTORY_ITEMS.
+const WORLD_ENEMY_DROPS = {
+  fogo:  { invKey:'match',   label:'Fósforo' },
+  agua:  { invKey:'wax',     label:'Cera' },
+  ar:    { invKey:'cotton',  label:'Algodão' },
+  terra: { invKey:'ironOre', label:'Minério de Ferro' },
+};
 
 function renderWorldInventory(){
   const grid = document.getElementById('worldInventoryGrid');
@@ -45,6 +63,12 @@ function selectWorldInventoryItem(key){
     w.equippedTool = key;
     toggleBuildMode(null);
     toast(item.icon + ' ' + item.label + ' equipada!');
+  } else if(item.type === 'material'){
+    // material dropado por inimigo — ainda sem receita de craft. Clicar só mostra
+    // o que é e quanto o player tem (depois, quando a receita existir, vira um type 'resource' normal)
+    const qty = item.get(w);
+    if(qty <= 0){ toast('Você ainda não tem ' + item.label.toLowerCase() + '.'); return; }
+    toast(item.icon + ' ' + item.label + ' x' + qty + ' — ainda sem receita de craft.');
   } else {
     if(item.get(w) <= 0){ toast('Sem ' + item.label.toLowerCase() + ' suficiente.'); return; }
     w.equippedTool = null; // solta a ferramenta pra segurar o material de construção
@@ -284,6 +308,11 @@ function ensureWorldState(){
       hasMetElder: false, // controla se o diálogo de boas-vindas do ancião já abriu sozinho uma vez
       hasBuiltHouse: false, // quando vira true, a ponta do cajado do ancião passa a brilhar (sinaliza que tem mais conversa)
       hasSeenElderSecondMessage: false, // one-shot: marca se o ancião já deu o aviso sobre os perigos mais fortes
+      // materiais dropados por Tymbas selvagens quando abatidos com a espada
+      cotton: 0,  // ar
+      match: 0,   // fogo
+      wax: 0,     // água
+      ironOre: 0, // terra
       trees: genWorldTrees(),
       rocks: genWorldRocks(),
       blocks: [],
@@ -381,6 +410,11 @@ function ensureWorldState(){
     w.hasSeenElderSecondMessage = false;
     migrated = true;
   }
+  // migração: materiais dropados por Tymbas selvagens. Quem jogou antes não dropou nada,
+  // então entram zerados (o player vai ter que caçar pra acumular)
+  ['cotton','match','wax','ironOre'].forEach(k => {
+    if(w[k] === undefined){ w[k] = 0; migrated = true; }
+  });
   if(migrated) saveState();
 }
 
@@ -665,7 +699,16 @@ function slayWorldEnemyWithSword(id){
 
   swingPlayerSword();
   state.coins = (state.coins || 0) + WORLD_ENEMY_KILL_COINS;
-  toast('🗡️ Bichinho selvagem abatido! +' + WORLD_ENEMY_KILL_COINS + ' moedas');
+
+  // dropa 1 material baseado no elemento do bichinho abatido (antes de sortear o novo elemento!)
+  const drop = WORLD_ENEMY_DROPS[e.element];
+  let dropLabel = null;
+  if(drop){
+    w[drop.invKey] = (w[drop.invKey] || 0) + 1;
+    dropLabel = drop.label;
+  }
+  const dropSuffix = dropLabel ? ' +1 ' + dropLabel : '';
+  toast('🗡️ Bichinho selvagem abatido! +' + WORLD_ENEMY_KILL_COINS + ' moedas' + dropSuffix);
 
   const spot = worldRandomSpotAwayFromHouses(140);
   const target = worldRandomSpotAwayFromHouses(140);
