@@ -95,6 +95,7 @@
       <div style="display:flex; gap:6px;">
         <button class="world-back-btn" onclick="closeWorld()" aria-label="Voltar">←</button>
         <button class="world-back-btn" id="worldInventoryBtn" onclick="toggleWorldInventory()" aria-label="Inventário">🎒</button>
+        <button class="world-back-btn" id="worldGuideBtn" onclick="toggleWorldGuide()" aria-label="Guia de construções">📜</button>
       </div>
       <div style="display:flex; gap:6px;">
         <button class="world-hud-pill resource-btn" id="worldHandPill" onclick="toggleWorldInventory()">✋ <span id="worldHandIcon">vazio</span></button>
@@ -115,6 +116,18 @@
         </div>
         <div class="world-inventory-hint">Toque num item pra colocar na mão</div>
         <div class="world-inventory-grid" id="worldInventoryGrid"></div>
+      </div>
+    </div>
+
+    <!-- Painel de guia: mostra os padrões de construção de cada item craftável -->
+    <div class="world-inventory-overlay" id="worldGuideOverlay" onclick="if(event.target===this) toggleWorldGuide(false)">
+      <div class="world-inventory-panel">
+        <div class="world-inventory-header">
+          <span>📜 Guia de construções</span>
+          <button class="world-inventory-close" onclick="toggleWorldGuide(false)" aria-label="Fechar">✕</button>
+        </div>
+        <div class="world-inventory-hint">🪵 madeira · 🪨 pedra · ⬜ espaço vazio</div>
+        <div class="world-guide-list" id="worldGuideList"></div>
       </div>
     </div>
 

@@ -67,6 +67,69 @@ function toggleWorldInventory(force){
   if(shouldOpen) renderWorldInventory();
 }
 
+// Catálogo do guia de construções. Pra adicionar um item novo no futuro, basta
+// acrescentar uma entrada aqui apontando pro padrão (cells) já usado no craft —
+// o desenho da mini-grade é gerado sozinho a partir dele.
+const WORLD_BUILD_GUIDE = [
+  { key:'axe', icon:'🪓', label:'Machado', desc:'2 pedras lado a lado em cima + 2 madeiras empilhadas embaixo.',
+    cells: WORLD_AXE_PATTERN },
+  { key:'pickaxe', icon:'⛏️', label:'Picareta', desc:'3 pedras lado a lado em cima + 2 madeiras empilhadas embaixo.',
+    cells: WORLD_PICKAXE_PATTERN },
+  { key:'sword', icon:'🗡️', label:'Espada', desc:'2 pedras + 1 madeira empilhados numa coluna só.',
+    cells: WORLD_SWORD_PATTERN },
+  { key:'house-wood', icon:'🏠', label:'Casa de Madeira', desc:'8 madeiras em formato de portal (o vão do meio fica livre). Dura 5 dias do mundo.',
+    cells: WORLD_HOUSE_PATTERN.map(([dx, dy]) => ({ dx, dy, type:'wood' })), gate: WORLD_HOUSE_GATE_CELLS },
+  { key:'house-stone', icon:'🪨🏠', label:'Casa de Pedra', desc:'8 pedras em formato de portal (o vão do meio fica livre). Dura 30 dias do mundo.',
+    cells: WORLD_HOUSE_PATTERN.map(([dx, dy]) => ({ dx, dy, type:'stone' })), gate: WORLD_HOUSE_GATE_CELLS },
+];
+
+// desenha a mini-grade de um padrão de construção: cada célula preenchida mostra
+// o material exigido naquela posição; células do "gate" (vão livre da casa) aparecem
+// tracejadas; o resto fica em branco só pra dar noção do formato geral
+function worldGuideGridHtml(cells, gate){
+  gate = gate || [];
+  const allDx = cells.map(c => c.dx).concat(gate.map(([dx]) => dx));
+  const allDy = cells.map(c => c.dy).concat(gate.map(([, dy]) => dy));
+  const minDx = Math.min(...allDx), maxDx = Math.max(...allDx);
+  const minDy = Math.min(...allDy), maxDy = Math.max(...allDy);
+  const cols = maxDx - minDx + 1, rows = maxDy - minDy + 1;
+  let html = '<div class="world-guide-grid" style="grid-template-columns:repeat(' + cols + ',26px); grid-template-rows:repeat(' + rows + ',26px);">';
+  for(let gy = minDy; gy <= maxDy; gy++){
+    for(let gx = minDx; gx <= maxDx; gx++){
+      const cell = cells.find(c => c.dx === gx && c.dy === gy);
+      if(cell){
+        html += '<div class="world-guide-cell filled">' + (cell.type === 'wood' ? '🪵' : '🪨') + '</div>';
+      } else if(gate.some(([dx, dy]) => dx === gx && dy === gy)){
+        html += '<div class="world-guide-cell gate"></div>';
+      } else {
+        html += '<div class="world-guide-cell"></div>';
+      }
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderWorldGuide(){
+  const list = document.getElementById('worldGuideList');
+  if(!list) return;
+  list.innerHTML = WORLD_BUILD_GUIDE.map(item => {
+    return '<div class="world-guide-item">' +
+      '<div class="world-guide-item-header">' + item.icon + ' <strong>' + item.label + '</strong></div>' +
+      worldGuideGridHtml(item.cells, item.gate) +
+      '<div class="world-guide-item-desc">' + item.desc + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleWorldGuide(force){
+  const overlay = document.getElementById('worldGuideOverlay');
+  if(!overlay) return;
+  const shouldOpen = (force === undefined) ? !overlay.classList.contains('open') : !!force;
+  overlay.classList.toggle('open', shouldOpen);
+  if(shouldOpen) renderWorldGuide();
+}
+
 function worldGridKey(gx, gy){ return gx + '_' + gy; }
 function worldBlocksGridMap(blocks){
   const map = {};

@@ -804,6 +804,15 @@
   .world-inventory-item-count{ font-weight:800; font-size:13px; color:#2A2A2A; }
   .world-inventory-item-label{ font-size:10.5px; font-weight:600; color:#8A8A8E; }
   .world-inventory-empty-msg{ grid-column:1 / -1; text-align:center; color:#999; font-size:13px; padding:20px 6px; }
+
+  .world-guide-list{ display:flex; flex-direction:column; gap:16px; padding:0 14px 16px; overflow-y:auto; }
+  .world-guide-item{ background:#F7F7FA; border-radius:14px; padding:12px; }
+  .world-guide-item-header{ font-size:13.5px; color:#2A2A2A; margin-bottom:8px; }
+  .world-guide-item-desc{ font-size:11.5px; color:#8A8A8E; margin-top:8px; line-height:1.4; }
+  .world-guide-grid{ display:inline-grid; gap:3px; }
+  .world-guide-cell{ width:26px; height:26px; border-radius:6px; background:#E9E9EE; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .world-guide-cell.filled{ background:#FFF6DC; border:1.5px solid #FFD65C; }
+  .world-guide-cell.gate{ background:transparent; border:1.5px dashed #C9C9D2; }
   .world-bottom-bar{ position:absolute; bottom:0; left:0; right:0; z-index:30; display:flex; justify-content:space-between; align-items:flex-end; padding:18px; }
   .world-joystick-zone{ width:104px; height:104px; border-radius:50%; background:rgba(255,255,255,0.2); border:2px solid rgba(255,255,255,0.45); position:relative; touch-action:none; }
   .world-joystick-thumb{ width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.9); position:absolute; top:30px; left:30px; box-shadow:0 4px 8px rgba(0,0,0,0.25); }
