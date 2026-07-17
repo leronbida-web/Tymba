@@ -303,13 +303,34 @@ function genWorldEnemies(count, idPrefix){
   const n = count === undefined ? WORLD_ENEMY_COUNT : count;
   const prefix = idPrefix || 'e';
   const enemies = [];
+
+  // Garante que a população BASE do dia sempre tenha pelo menos 1 Tymba selvagem
+  // de cada elemento (fogo/água/ar/terra). As populações extras (bônus da noite,
+  // via genWorldEnemies(extra, 'en')) continuam aleatórias — se forçasse 1 de cada
+  // lá também, o bônus de 3 bichinhos deixaria 1 elemento de fora.
+  const isBasePopulation = (count === undefined);
+  const allElements = Object.keys(ELEMENTS); // ['fogo','terra','ar','agua'] na ordem do catálogo
+  let elementQueue = null;
+  if(isBasePopulation && n >= allElements.length){
+    elementQueue = allElements.slice();                     // começa com 1 de cada
+    while(elementQueue.length < n){
+      elementQueue.push(randomElement());                   // completa o resto aleatório
+    }
+    // embaralha pra os 4 garantidos não ficarem sempre nos primeiros 4 slots do array
+    for(let i = elementQueue.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [elementQueue[i], elementQueue[j]] = [elementQueue[j], elementQueue[i]];
+    }
+  }
+
   for(let i = 0; i < n; i++){
     const spot = worldRandomSpotAwayFromHouses(140);
     const target = worldRandomSpotAwayFromHouses(140);
+    const element = elementQueue ? elementQueue[i] : randomElement();
     enemies.push({
       id: prefix + Date.now() + '_' + i, x: spot.x, y: spot.y,
       tx: target.x, ty: target.y,
-      element: randomElement(), alive:true,
+      element: element, alive:true,
       facing:'front', flip:false,
     });
   }
