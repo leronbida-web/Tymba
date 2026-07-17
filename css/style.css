@@ -797,6 +797,39 @@
   }
   .world-player-sword.show{ display:block; }
   .world-player-sword.swing{ animation:worldAxeSwing .22s ease-out; }
+  /* armadura no corpo do player — sobrepõe o torso do bichinho. Sprite vem do imgur,
+     background-size:contain pra escalar sem cortar. Se a sprite tiver tamanho/aspecto
+     diferente, ajusta width/height/top/left aqui */
+  .world-player-armor{
+    position:absolute;
+    inset:0;
+    background-image:url('https://i.imgur.com/5kY4SLP.png');
+    background-size:contain;
+    background-repeat:no-repeat;
+    background-position:center bottom;
+    pointer-events:none;
+    display:none;
+    z-index:1;
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+  }
+  .world-player-armor.show{ display:block; }
+  /* vela na mão esquerda do player — espelha a posição do machado (que fica na direita).
+     Usa o emoji 🔥 como conteúdo (até você mandar a sprite real) com glow alaranjado pra simular luz */
+  .world-player-candle{
+    position:absolute;
+    left:-8px;
+    bottom:14px;
+    width:28px; height:28px;
+    font-size:22px;
+    line-height:1;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+    z-index:2;
+    filter:drop-shadow(0 0 6px rgba(255,180,80,0.85)) drop-shadow(0 0 12px rgba(255,140,40,0.45));
+  }
+  .world-player-candle.show{ display:flex; }
   @keyframes worldWalkBob{ 0%,100%{ transform:translateY(0) scaleY(1); } 50%{ transform:translateY(-3px) scaleY(0.95); } }
   .night-overlay{ position:absolute; inset:0; background:#0B1340; opacity:0; pointer-events:none; z-index:8; transition:opacity 1.2s linear; }
   .world-hit-flash{ position:absolute; inset:0; background:#C0201A; opacity:0; pointer-events:none; z-index:9; transition:opacity .15s linear; }

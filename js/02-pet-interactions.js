@@ -103,6 +103,31 @@ const WORLD_SWORD_PATTERN = [
   { dx:0, dy:1, type:'stone' },
   { dx:0, dy:2, type:'wood'  },
 ];
+// padrão "armadura": 4 minérios de ferro em cima (fileira 0) + 2 minérios no meio (fileira 1,
+// centrados nas colunas 1-2) + 2 algodões embaixo (fileira 2, centrados nas colunas 1-2) —
+// usa exatamente 6 minérios de ferro e 2 algodões
+const WORLD_ARMOR_PATTERN = [
+  { dx:0, dy:0, type:'ironOre' },
+  { dx:1, dy:0, type:'ironOre' },
+  { dx:2, dy:0, type:'ironOre' },
+  { dx:3, dy:0, type:'ironOre' },
+  { dx:1, dy:1, type:'ironOre' },
+  { dx:2, dy:1, type:'ironOre' },
+  { dx:1, dy:2, type:'cotton'  },
+  { dx:2, dy:2, type:'cotton'  },
+];
+// padrão "vela": 1 fósforo em cima + 2 ceras empilhadas embaixo (coluna de 3, igual à espada
+// no formato, mas com materiais diferentes) — usa exatamente 1 fósforo e 2 ceras
+const WORLD_CANDLE_PATTERN = [
+  { dx:0, dy:0, type:'match' },
+  { dx:0, dy:1, type:'wax'   },
+  { dx:0, dy:2, type:'wax'   },
+];
+// sprite da armadura (sobrepõe o corpo do bichinho). Ajustar size/position no CSS se a sprite
+// tiver proporção diferente do esperado
+const WORLD_ARMOR_SPRITE = 'https://i.imgur.com/5kY4SLP.png';
+// sprite da vela (placeholder — usuário ainda vai mandar a sprite real)
+const WORLD_CANDLE_SPRITE = ''; // vazio = usa o ícone emoji (🔥) do WORLD_INVENTORY_ITEMS no overlay
 const WORLD_ENEMY_KILL_COINS = 100; // moedas ganhas ao matar um bichinho selvagem com a espada
 // raios de colisão física (bloqueiam o movimento do player, obrigando a desviar)
 const WORLD_PLAYER_COLLISION_RADIUS = 14;
