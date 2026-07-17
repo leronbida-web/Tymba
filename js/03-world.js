@@ -853,6 +853,7 @@ const WORLD_PLAYER_BALL_SPEED = 420;       // px/s — um pouco mais rápido que
 const WORLD_PLAYER_BALL_HIT_RADIUS = 30;   // distância pra considerar que a bolinha acertou o bichinho
 const WORLD_ENEMY_SHOT_HITS_NEEDED = 10;   // tiros necessários pra abater um bichinho selvagem
 const WORLD_PLAYER_SHOT_COOLDOWN_MS = 260; // intervalo mínimo entre disparos, pra não virar metralhadora
+const WORLD_CANDLE_FLEE_RADIUS = 150;      // raio (em px) da luz da vela que assusta bichinhos selvagens à noite
 
 // guarda a última direção não-nula do joystick — é pra onde o player mira mesmo
 // depois de soltar o direcional, já que não faz sentido atirar "pra lugar nenhum"
@@ -1601,14 +1602,36 @@ function worldLoop(ts){
   } else {
     // DE NOITE: inimigos vagam livremente e, se o player chegar perto, param e atacam
     // com bolinhas da cor do elemento, em vez de fugir — a menos que o player esteja
-    // dentro da área segura de uma casa, aí eles não conseguem mirar nele
+    // dentro da área segura de uma casa (aí eles não conseguem mirar nele) OU com a
+    // vela acesa (aí fogem da luz, igual fogem do player de dia)
     const playerProtected = isNearAnyHouse(w, w.x, w.y);
+    const candleLit = !!(w.hasCandle && w.equippedCandle);
     for(const e of w.enemies){
       if(!e.alive) continue;
       const distToPlayer = Math.hypot(w.x - e.x, w.y - e.y);
-      const aggro = distToPlayer < WORLD_NIGHT_SIGHT_RADIUS && !playerProtected;
+      const fleeingCandle = candleLit && distToPlayer < WORLD_CANDLE_FLEE_RADIUS;
+      const aggro = !fleeingCandle && distToPlayer < WORLD_NIGHT_SIGHT_RADIUS && !playerProtected;
       let moving = false;
-      if(aggro){
+      if(fleeingCandle){
+        // assustado com a luz: mesma lógica de fuga do modo dia — mira num ponto na
+        // direção oposta ao player, dentro dos limites do mapa
+        const awayX = e.x + (e.x - w.x);
+        const awayY = e.y + (e.y - w.y);
+        e.tx = Math.max(WORLD_PLAYER_MARGIN, Math.min(WORLD_WIDTH - WORLD_PLAYER_MARGIN, awayX));
+        e.ty = Math.max(WORLD_PLAYER_MARGIN, Math.min(WORLD_HEIGHT - WORLD_PLAYER_MARGIN, awayY));
+        const dToTarget = Math.hypot(e.tx - e.x, e.ty - e.y);
+        if(dToTarget > 1){
+          const stepNx = (e.tx - e.x) / dToTarget;
+          const stepNy = (e.ty - e.y) / dToTarget;
+          e.x += stepNx * WORLD_ENEMY_FLEE_SPEED * dt;
+          e.y += stepNy * WORLD_ENEMY_FLEE_SPEED * dt;
+          moving = true;
+          const newFacing = stepNy < -0.3 ? 'back' : 'front';
+          e.facing = newFacing;
+          if(stepNx > 0.15) e.flip = false;
+          else if(stepNx < -0.15) e.flip = true;
+        }
+      } else if(aggro){
         // parado, encarando o player, atacando em intervalos
         const dx = w.x - e.x;
         if(dx > 8) e.flip = false;
