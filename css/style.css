@@ -383,7 +383,11 @@
     position:relative; flex:1 1 auto; overflow:hidden; min-height:0;
     background:
       radial-gradient(circle at 50% 0%, rgba(108,92,231,0.35), transparent 55%),
-      linear-gradient(180deg, #241a3d 0%, #1B1230 55%);
+      linear-gradient(180deg, rgba(36,26,61,0.55) 0%, rgba(27,18,48,0.78) 55%),
+      url("https://i.imgur.com/uulCRJZ.jpeg");
+    background-size: cover, cover, cover;
+    background-position: center, center, center;
+    background-repeat: no-repeat, no-repeat, no-repeat;
   }
   .duel-floor{ display:none; }
   .duel-opp{
