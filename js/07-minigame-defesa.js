@@ -273,8 +273,12 @@ function defesaLoop(ts){
 function endDefesa(){
   defesaActive = false;
   cancelAnimationFrame(defesaRaf);
-  const statGain = Math.round(defesaScore*0.6 + 1);
-  const coinGain = Math.max(1, Math.round(defesaScore/2));
+  // teto no ganho por sessão: sem isso, uma sessão longa (jogador acostumado com o
+  // platô de dificuldade lá pelo nível ~17) rendia XP sem limite e pulava vários
+  // níveis de uma vez só. Acima do placar do teto, continua sendo um ótimo resultado,
+  // só não cresce mais o ganho — pra isso, joga de novo.
+  const statGain = Math.min(DEFESA_MAX_STAT_GAIN, Math.round(defesaScore*0.6 + 1));
+  const coinGain = Math.min(DEFESA_MAX_COIN_GAIN, Math.max(1, Math.round(defesaScore/2)));
   finishTraining('screen-defesa','resistencia', statGain, coinGain,
     defesaScore >= 12 ? 'Resistência impenetrável!' : 'Treino concluído!',
     `Você bloqueou ${defesaScore} bolas de canhão e chegou ao nível ${defesaLevel}.`);

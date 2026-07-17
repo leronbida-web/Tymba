@@ -54,6 +54,10 @@ function finishTraining(screenId, stat, statGain, coinGain, title, sub){
 let defesaCtx, defesaCanvas, defesaActive=false, defesaLane=1, defesaBalls=[];
 let defesaScore=0, defesaVidas=3, defesaRaf=null, defesaLastTime=0, defesaLastSpawn=0;
 let defesaBaseSpeedT=0.30, defesaBaseSpawn=1.35, defesaLevel=1;
+// teto de recompensa por sessão (ver endDefesa em 07-minigame-defesa.js) — evita que
+// sessões muito longas rendam XP/moedas sem limite e causem saltos de vários níveis de uma vez
+const DEFESA_MAX_STAT_GAIN = 25;
+const DEFESA_MAX_COIN_GAIN = 20;
 
 // --- parâmetros de perspectiva (frações da tela) ---
 const DEFESA_HORIZON_FRAC = 0.16;   // altura do "horizonte" onde fica o canhão (bem pequeno, longe)
