@@ -718,6 +718,12 @@
   .world-block{ position:absolute; width:44px; height:44px; transform:translate(-50%,-50%); border-radius:8px; z-index:4; box-shadow:0 4px 6px rgba(0,0,0,0.25); cursor:pointer; }
   .world-block.wood{ background:#A9713F; border:3px solid #7A4E28; }
   .world-block.stone{ background:#9AA0A6; border:3px solid #6B7075; }
+  /* cores sólidas dos 4 recursos que dropam de Tymbas selvagens — antes ficavam transparentes
+     por falta de regra no CSS (só wood e stone tinham) */
+  .world-block.ironOre{ background:#B8541E; border:3px solid #7A3812; }  /* laranja escuro */
+  .world-block.cotton { background:#5BA8E8; border:3px solid #3A7AB5; }  /* azul */
+  .world-block.match  { background:#D8332B; border:3px solid #8C1E18; }  /* vermelho */
+  .world-block.wax    { background:#F5F1E6; border:3px solid #C9C2A8; }  /* branco */
   .world-house{ position:absolute; filter:drop-shadow(0 6px 10px rgba(0,0,0,0.3)); pointer-events:none; }
   .world-elder{ position:absolute; width:70px; height:70px; transform:translate(-50%,-70%); cursor:pointer; filter:drop-shadow(0 6px 8px rgba(0,0,0,0.45)); }
   .world-elder img{ width:100%; height:100%; object-fit:contain; pointer-events:none; }
@@ -830,6 +836,39 @@
     filter:drop-shadow(0 0 6px rgba(255,180,80,0.85)) drop-shadow(0 0 12px rgba(255,140,40,0.45));
   }
   .world-player-candle.show{ display:flex; }
+  /* halo de luz alaranjada em volta do player quando a vela está acesa.
+     A div fica fixa no world-viewport (depois do night-overlay) e é reposicionada
+     em coordenadas de TELA a cada frame do world loop (não usa coordenadas do mundo,
+     porque está fora do worldLayer que sofre transform da câmera).
+     Tem 220px (maior que o player de 64px) pra simular alcance de luz.
+     Cor: radial gradient laranja→transparente. Opacidade controlada por dia/noite. */
+  .world-player-glow{
+    position:absolute;
+    width:220px;
+    height:220px;
+    margin-left:-110px;  /* metade da largura — equivale a translateX(-50%) sem conflitar com a animação */
+    margin-top:-110px;
+    border-radius:50%;
+    background:radial-gradient(circle,
+      rgba(255,210,110,0.9) 0%,
+      rgba(255,170,70,0.6)  20%,
+      rgba(255,140,50,0.3)  45%,
+      rgba(255,120,40,0)    75%);
+    pointer-events:none;
+    z-index:9;            /* acima do night-overlay (z-index 8) */
+    opacity:0;
+    transition:opacity 1.2s linear;
+    will-change:transform,opacity;
+  }
+  .world-player-glow.show{ opacity:0.18; }                /* vela acesa de dia — bem sutil */
+  .world-player-glow.show.night{
+    opacity:0.9;                                           /* vela acesa de noite — bem visível */
+    animation:worldPlayerGlowPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes worldPlayerGlowPulse{
+    0%,100%{ transform:scale(1);    opacity:0.85; }
+    50%    { transform:scale(1.08); opacity:1;    }
+  }
   @keyframes worldWalkBob{ 0%,100%{ transform:translateY(0) scaleY(1); } 50%{ transform:translateY(-3px) scaleY(0.95); } }
   .night-overlay{ position:absolute; inset:0; background:#0B1340; opacity:0; pointer-events:none; z-index:8; transition:opacity 1.2s linear; }
   .world-hit-flash{ position:absolute; inset:0; background:#C0201A; opacity:0; pointer-events:none; z-index:9; transition:opacity .15s linear; }

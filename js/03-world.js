@@ -701,6 +701,43 @@ function updateWorldCandleVisual(){
   const has = !!(w && w.hasCandle && w.equippedCandle);
   const candleEl = document.getElementById('worldPlayerCandle');
   if(candleEl) candleEl.classList.toggle('show', has);
+  // halo de luz alaranjada: aparece quando a vela está acesa. A opacidade/intensidade
+  // é controlada pela classe 'night' (toggle separada em updateWorldGlowDayNight()).
+  const glowEl = document.getElementById('worldPlayerGlow');
+  if(glowEl){
+    glowEl.classList.toggle('show', has);
+    if(has) updateWorldGlowDayNight();  // garante que dia/noite bate com o estado atual
+  }
+}
+
+// atualiza o estado dia/noite do halo de luz da vela. Chamado toda vez que o ciclo
+// dia/noite muda (no worldLoop, junto com a atualização do night-overlay).
+function updateWorldGlowDayNight(){
+  const glowEl = document.getElementById('worldPlayerGlow');
+  if(!glowEl) return;
+  const cyc = worldCycleInfo();
+  glowEl.classList.toggle('night', !cyc.isDay);
+}
+
+// reposiciona o halo de luz da vela em coordenadas de TELA a cada frame.
+// A div do glow vive FORA do worldLayer (depois do night-overlay), então não recebe
+// o transform da câmera — precisa calcular a posição na tela manualmente:
+// tela = mundo - câmera. O anchor do player usa transform translate(-50%, -60%) na
+// .world-player, então replicamos o mesmo offset pra centralizar o glow no bichinho.
+function positionWorldGlow(){
+  const glowEl = document.getElementById('worldPlayerGlow');
+  if(!glowEl) return;
+  const w = state.world;
+  const viewport = document.getElementById('worldViewport');
+  const vw = viewport ? viewport.clientWidth : 360;
+  const vh = viewport ? viewport.clientHeight : 640;
+  const camera = worldCamera(vw, vh);
+  // centro do player na tela: posição do player (já com anchor -50%, -60%) menos câmera,
+  // depois somamos metade da altura/largura do bichinho (64/2 = 32) pra pegar o CENTRO
+  const screenX = w.x - camera.x + 32;
+  const screenY = w.y - camera.y + 32 - (64 * 0.1);  // -60% da altura pra alinhar com o anchor do .world-player
+  glowEl.style.left = screenX + 'px';
+  glowEl.style.top  = screenY + 'px';
 }
 
 function tapRock(id){
@@ -1378,6 +1415,8 @@ function worldLoop(ts){
 
   const cyc = worldCycleInfo();
   const overlay = document.getElementById('worldNightOverlay');
+  // sincroniza a classe dia/noite do halo de luz da vela com o estado atual do ciclo
+  updateWorldGlowDayNight();
   if(cyc.isDay){
     overlay.style.opacity = 0;
     worldPlayerHits = 0; // de dia fica seguro de novo
@@ -1531,6 +1570,8 @@ function worldLoop(ts){
   playerEl.style.left = w.x + 'px';
   playerEl.style.top = w.y + 'px';
   playerEl.style.zIndex = Math.round(w.y);
+  // halo da vela fica fora do worldLayer, então reposiciona em coordenadas de tela
+  positionWorldGlow();
 
   document.getElementById('worldCoinsCount').textContent = state.coins;
   const invOverlay = document.getElementById('worldInventoryOverlay');
