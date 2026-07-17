@@ -6,7 +6,7 @@
 <title>Bichinho Elemental</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=6">
+<link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 <div id="app">
@@ -128,24 +128,6 @@
         </div>
         <div class="world-inventory-hint">🪵 madeira · 🪨 pedra · ⬜ espaço vazio</div>
         <div class="world-guide-list" id="worldGuideList"></div>
-      </div>
-    </div>
-
-    <!-- Painel do ancião: mensagem de boas-vindas + atalho pro guia de construções -->
-    <div class="world-inventory-overlay" id="worldElderOverlay" onclick="if(event.target===this) toggleWorldElderDialog(false)">
-      <div class="world-inventory-panel">
-        <div class="world-inventory-header">
-          <span>🧙 Ancião</span>
-          <button class="world-inventory-close" onclick="toggleWorldElderDialog(false)" aria-label="Fechar">✕</button>
-        </div>
-        <div class="world-elder-panel">
-          <div class="world-elder-portrait"><img src="https://i.imgur.com/C0iXsK7.png" alt="Ancião"></div>
-          <div class="world-elder-text" id="worldElderText">Bem vindo jovem, que bom vê-lo por aqui. Essas terras são lindas essa época do ano, mas muito cuidado à noite os Tymbas ficam agressivos, construa uma casa para se proteger. Ferramentas serão muito úteis, pegue esse pergaminho:</div>
-          <button class="world-elder-scroll-btn" id="worldElderBtn" onclick="toggleWorldElderDialog(false); toggleWorldGuide(true);">
-            <span class="icon">📜</span>
-            <span class="label">Abrir guia</span>
-          </button>
-        </div>
       </div>
     </div>
 
@@ -501,20 +483,20 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-<script src="js/01-core-state.js?v=6"></script>
-<script src="js/02-pet-interactions.js?v=6"></script>
-<script src="js/03-world.js?v=6"></script>
-<script src="js/04-render-core.js?v=6"></script>
-<script src="js/05-minigame-mira.js?v=6"></script>
-<script src="js/06-evolution-training.js?v=6"></script>
-<script src="js/07-minigame-defesa.js?v=6"></script>
-<script src="js/08-minigame-especial.js?v=6"></script>
-<script src="js/09-minigame-corrida.js?v=6"></script>
-<script src="js/10-minigame-pulo.js?v=6"></script>
-<script src="js/11-minigame-cores2048.js?v=6"></script>
-<script src="js/12-poderes-status.js?v=6"></script>
-<script src="js/13-duel-core.js?v=6"></script>
-<script src="js/14-duel-online.js?v=6"></script>
-<script src="js/15-dev-tools.js?v=6"></script>
+<script src="js/01-core-state.js?v=5"></script>
+<script src="js/02-pet-interactions.js?v=5"></script>
+<script src="js/03-world.js?v=5"></script>
+<script src="js/04-render-core.js?v=5"></script>
+<script src="js/05-minigame-mira.js?v=5"></script>
+<script src="js/06-evolution-training.js?v=5"></script>
+<script src="js/07-minigame-defesa.js?v=5"></script>
+<script src="js/08-minigame-especial.js?v=5"></script>
+<script src="js/09-minigame-corrida.js?v=5"></script>
+<script src="js/10-minigame-pulo.js?v=5"></script>
+<script src="js/11-minigame-cores2048.js?v=5"></script>
+<script src="js/12-poderes-status.js?v=5"></script>
+<script src="js/13-duel-core.js?v=5"></script>
+<script src="js/14-duel-online.js?v=5"></script>
+<script src="js/15-dev-tools.js?v=5"></script>
 </body>
 </html>

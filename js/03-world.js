@@ -1,31 +1,13 @@
 // Catálogo de itens do inventário do mundo. Pra adicionar um item novo no futuro
 // (ex: picareta), basta acrescentar uma entrada aqui — o painel se atualiza sozinho.
 // get(w) retorna a quantidade (ou 1/0 pra itens únicos tipo ferramentas via 'owned').
-// 'material' é um tipo novo pra itens dropados por inimigos: contam no inventário mas
-// ainda não viram receita de craft (clicar só dá um toast explicando).
 const WORLD_INVENTORY_ITEMS = [
   { key:'wood', icon:'🪵', label:'Madeira', type:'resource', get:(w) => w.wood || 0 },
   { key:'stone', icon:'🪨', label:'Pedra', type:'resource', get:(w) => w.stone || 0 },
   { key:'axe', icon:'🪓', label:'Machado', type:'tool', owned:(w) => !!w.hasAxe },
   { key:'pickaxe', icon:'⛏️', label:'Picareta', type:'tool', owned:(w) => !!w.hasPickaxe },
   { key:'sword', icon:'🗡️', label:'Espada', type:'tool', owned:(w) => !!w.hasSword },
-  // materiais dropados por Tymbas selvagens (sprite/ícone placeholder — depois trocamos
-  // pelo sprite real quando existirem): ar=algodão, fogo=fósforo, água=cera, terra=minério de ferro
-  { key:'cotton',  icon:'🧶', label:'Algodão',         type:'material', get:(w) => w.cotton  || 0 },
-  { key:'match',   icon:'🔥', label:'Fósforo',         type:'material', get:(w) => w.match   || 0 },
-  { key:'wax',     icon:'🕯️', label:'Cera',            type:'material', get:(w) => w.wax     || 0 },
-  { key:'ironOre', icon:'⛓️', label:'Minério de Ferro', type:'material', get:(w) => w.ironOre || 0 },
 ];
-
-// Tabela de drops por elemento: cada Tymba selvagem abatido com a espada dropa 1
-// material de acordo com o elemento dele. As chaves batem com `e.element` (fogo/agua/ar/terra).
-// O label aqui é só pro toast — o item em si já vem do WORLD_INVENTORY_ITEMS.
-const WORLD_ENEMY_DROPS = {
-  fogo:  { invKey:'match',   label:'Fósforo' },
-  agua:  { invKey:'wax',     label:'Cera' },
-  ar:    { invKey:'cotton',  label:'Algodão' },
-  terra: { invKey:'ironOre', label:'Minério de Ferro' },
-};
 
 function renderWorldInventory(){
   const grid = document.getElementById('worldInventoryGrid');
@@ -63,12 +45,6 @@ function selectWorldInventoryItem(key){
     w.equippedTool = key;
     toggleBuildMode(null);
     toast(item.icon + ' ' + item.label + ' equipada!');
-  } else if(item.type === 'material'){
-    // material dropado por inimigo — ainda sem receita de craft. Clicar só mostra
-    // o que é e quanto o player tem (depois, quando a receita existir, vira um type 'resource' normal)
-    const qty = item.get(w);
-    if(qty <= 0){ toast('Você ainda não tem ' + item.label.toLowerCase() + '.'); return; }
-    toast(item.icon + ' ' + item.label + ' x' + qty + ' — ainda sem receita de craft.');
   } else {
     if(item.get(w) <= 0){ toast('Sem ' + item.label.toLowerCase() + ' suficiente.'); return; }
     w.equippedTool = null; // solta a ferramenta pra segurar o material de construção
@@ -152,68 +128,6 @@ function toggleWorldGuide(force){
   const shouldOpen = (force === undefined) ? !overlay.classList.contains('open') : !!force;
   overlay.classList.toggle('open', shouldOpen);
   if(shouldOpen) renderWorldGuide();
-}
-
-// clique no ancião: só abre o diálogo se o player estiver perto o suficiente.
-// se a casa já foi construída e o jogador ainda não viu o aviso sobre os perigos
-// mais fortes, marca como visto e mostra a segunda fala (em vez da de boas-vindas).
-function tapWorldElder(){
-  const w = state.world;
-  if(!w) return;
-  if(Math.hypot(w.x - WORLD_ELDER_POS.x, w.y - WORLD_ELDER_POS.y) > WORLD_ELDER_TALK_RADIUS){
-    toast('Chegue mais perto do ancião!');
-    return;
-  }
-  w.hasMetElder = true;
-  // decide ANTES de mutar o estado qual fala mostrar — se marcasse hasSeenElderSecondMessage=true
-  // antes do render, o renderizador leria o flag já alterado e cairia no "else" (boas-vindas) de novo
-  const showDanger = !!(w.hasBuiltHouse && !w.hasSeenElderSecondMessage);
-  if(showDanger){
-    w.hasSeenElderSecondMessage = true;
-  }
-  saveState();
-  renderElderDialog(showDanger);
-  toggleWorldElderDialog(true);
-}
-
-function toggleWorldElderDialog(force){
-  const overlay = document.getElementById('worldElderOverlay');
-  if(!overlay) return;
-  const shouldOpen = (force === undefined) ? !overlay.classList.contains('open') : !!force;
-  overlay.classList.toggle('open', shouldOpen);
-}
-
-// textos das duas falas do ancião. Centralizados aqui pra ficar fácil ajustar a redação sem
-// ter que caçar em HTML/JS espalhado.
-const ELDER_WELCOME_TEXT = 'Bem vindo jovem, que bom vê-lo por aqui. Essas terras são lindas essa época do ano, mas muito cuidado à noite os Tymbas ficam agressivos, construa uma casa para se proteger. Ferramentas serão muito úteis, pegue esse pergaminho:';
-const ELDER_DANGER_TEXT = 'Muito bem, mas tem coisas muito mais perigosas que Tymbas selvagens por aqui, faça uma espada e uma armadura para se defender e um pouco de luz para a noite seria muito útil também';
-
-// troca o conteúdo do diálogo do ancião de acordo com o estado do mundo.
-// aceita `forceDanger` (opcional) pra forçar uma das falas sem depender do estado — útil
-// quando o caller já sabe qual fala quer mostrar e acabou de mutar flags que confundiriam a leitura.
-// - antes da 1ª casa construída (ou depois do 2º aviso já lido): mensagem de boas-vindas + botão "Abrir guia"
-// - depois da 1ª casa construída e antes do 2º aviso ter sido lido: aviso sobre perigos + botão "Vou me preparar" (só fecha)
-function renderElderDialog(forceDanger){
-  const w = state.world;
-  const text = document.getElementById('worldElderText');
-  const btn = document.getElementById('worldElderBtn');
-  if(!text || !btn) return;
-  const showDanger = forceDanger !== undefined
-    ? !!forceDanger
-    : !!(w && w.hasBuiltHouse && !w.hasSeenElderSecondMessage);
-  const icon = btn.querySelector('.icon');
-  const label = btn.querySelector('.label');
-  if(showDanger){
-    text.textContent = ELDER_DANGER_TEXT;
-    if(icon) icon.textContent = '💪';
-    if(label) label.textContent = 'Vou me preparar';
-    btn.onclick = () => toggleWorldElderDialog(false);
-  } else {
-    text.textContent = ELDER_WELCOME_TEXT;
-    if(icon) icon.textContent = '📜';
-    if(label) label.textContent = 'Abrir guia';
-    btn.onclick = () => { toggleWorldElderDialog(false); toggleWorldGuide(true); };
-  }
 }
 
 function worldGridKey(gx, gy){ return gx + '_' + gy; }
@@ -305,14 +219,6 @@ function ensureWorldState(){
       hasPickaxe: false,
       hasSword: false,
       equippedTool: null, // 'axe' | 'pickaxe' | 'sword' | null — ferramenta atualmente na mão do player
-      hasMetElder: false, // controla se o diálogo de boas-vindas do ancião já abriu sozinho uma vez
-      hasBuiltHouse: false, // quando vira true, a ponta do cajado do ancião passa a brilhar (sinaliza que tem mais conversa)
-      hasSeenElderSecondMessage: false, // one-shot: marca se o ancião já deu o aviso sobre os perigos mais fortes
-      // materiais dropados por Tymbas selvagens quando abatidos com a espada
-      cotton: 0,  // ar
-      match: 0,   // fogo
-      wax: 0,     // água
-      ironOre: 0, // terra
       trees: genWorldTrees(),
       rocks: genWorldRocks(),
       blocks: [],
@@ -322,6 +228,8 @@ function ensureWorldState(){
       nightIndex: -1,
       nightBoosted: false,
       enemies: [],
+      elderStage: 0, // 0 = nunca conversou, 1 = já ouviu a mensagem de boas-vindas, 2 = já ouviu a segunda mensagem
+      everBuiltHouse: false, // fica true pra sempre assim que a primeira casa é construída (mesmo que ela desmorone depois)
     };
     saveState();
     return;
@@ -394,27 +302,17 @@ function ensureWorldState(){
     w.equippedTool = w.hasAxe ? 'axe' : null;
     migrated = true;
   }
-  if(w.hasMetElder === undefined){
-    // migração: saves antigos já exploraram o mundo, então não precisam ver o
-    // diálogo de boas-vindas abrir sozinho (mas o ancião continua clicável)
-    w.hasMetElder = true;
+  if(w.elderStage === undefined){
+    // migração: saves antigos ainda não tinham o ancião — quem já tem casa construída
+    // pula direto pro estágio 1 (já é esperado ter recebido a dica de casa)
+    w.elderStage = 0;
     migrated = true;
   }
-  if(w.hasBuiltHouse === undefined){
-    // migração: quem já jogou antes e construiu casa liga o brilho do cajado direto
-    w.hasBuiltHouse = !!(w.houses && w.houses.length);
+  if(w.everBuiltHouse === undefined){
+    // migração: saves antigos que já têm (ou já tiveram) uma casa contam como já tendo construído
+    w.everBuiltHouse = w.houses.length > 0;
     migrated = true;
   }
-  if(w.hasSeenElderSecondMessage === undefined){
-    // migração: o aviso novo do ancião ainda não foi lido por ninguém (entra como false pra permitir a 1ª vez)
-    w.hasSeenElderSecondMessage = false;
-    migrated = true;
-  }
-  // migração: materiais dropados por Tymbas selvagens. Quem jogou antes não dropou nada,
-  // então entram zerados (o player vai ter que caçar pra acumular)
-  ['cotton','match','wax','ironOre'].forEach(k => {
-    if(w[k] === undefined){ w[k] = 0; migrated = true; }
-  });
   if(migrated) saveState();
 }
 
@@ -452,7 +350,7 @@ const WORLD_HOUSE_SPRITES = {
     // 2: 'https://i.imgur.com/sua-imagem-nivel-2.png',
   },
   stone: {
-    1: 'https://i.imgur.com/W2Ps6yY.png',
+    1: 'https://i.imgur.com/V62LcUt.png',
   },
 };
 function worldHouseSvg(type, level){
@@ -537,19 +435,6 @@ function renderWorldStatic(){
     el.innerHTML = worldHouseSvg(h.type, h.level);
     entities.appendChild(el);
   });
-
-  const elderEl = document.createElement('div');
-  elderEl.className = 'world-elder';
-  elderEl.style.left = WORLD_ELDER_POS.x + 'px';
-  elderEl.style.top = WORLD_ELDER_POS.y + 'px';
-  elderEl.style.zIndex = Math.round(WORLD_ELDER_POS.y);
-  // a div do brilho da ponta do cajado fica sempre no DOM (display:none por padrão no CSS),
-  // e a classe .on é adicionada quando a casa já foi construída — assim o brilho aparece na hora
-  // logo depois do build, sem precisar esperar o próximo re-render completo do mundo
-  const staffGlow = '<div class="world-elder-staff-glow' + (w.hasBuiltHouse ? ' on' : '') + '"></div>';
-  elderEl.innerHTML = '<img src="' + WORLD_ELDER_SPRITE + '" alt="Ancião"><div class="world-elder-glow"></div>' + staffGlow;
-  elderEl.onclick = (ev) => { ev.stopPropagation(); tapWorldElder(); };
-  entities.appendChild(elderEl);
 
   w.enemies.filter(e => e.alive).forEach(e => {
     const el = document.createElement('div');
@@ -699,16 +584,7 @@ function slayWorldEnemyWithSword(id){
 
   swingPlayerSword();
   state.coins = (state.coins || 0) + WORLD_ENEMY_KILL_COINS;
-
-  // dropa 1 material baseado no elemento do bichinho abatido (antes de sortear o novo elemento!)
-  const drop = WORLD_ENEMY_DROPS[e.element];
-  let dropLabel = null;
-  if(drop){
-    w[drop.invKey] = (w[drop.invKey] || 0) + 1;
-    dropLabel = drop.label;
-  }
-  const dropSuffix = dropLabel ? ' +1 ' + dropLabel : '';
-  toast('🗡️ Bichinho selvagem abatido! +' + WORLD_ENEMY_KILL_COINS + ' moedas' + dropSuffix);
+  toast('🗡️ Bichinho selvagem abatido! +' + WORLD_ENEMY_KILL_COINS + ' moedas');
 
   const spot = worldRandomSpotAwayFromHouses(140);
   const target = worldRandomSpotAwayFromHouses(140);
@@ -886,12 +762,8 @@ function setupWorldGroundTap(){
     }
     if(worldBuildMode === 'wood') w.wood -= 1; else w.stone -= 1;
     w.blocks.push({ id:'b'+Date.now(), x: worldX, y: worldY, gx, gy, type: worldBuildMode });
-    const housesBefore = w.houses.length;
     if(worldBuildMode === 'wood') tryBuildHouse(w, gx, gy);
     if(worldBuildMode === 'stone') tryBuildStoneHouse(w, gx, gy);
-    // 1ª casa construída do save: marca o flag pra acender o brilho do cajado do ancião.
-    // (o flag persiste, então o brilho continua valendo mesmo se a casa desmoronar depois)
-    if(w.houses.length > housesBefore && !w.hasBuiltHouse){ w.hasBuiltHouse = true; }
     if(!w.hasAxe) tryBuildAxe(w, gx, gy);
     if(!w.hasPickaxe) tryBuildPickaxe(w, gx, gy);
     if(!w.hasSword) tryBuildSword(w, gx, gy);
@@ -948,6 +820,7 @@ function tryBuildHouse(w, placedGx, placedGy){
       builtAt: Date.now(),
       expiresAt: Date.now() + WORLD_HOUSE_LIFETIME_DAYS.wood[1] * WORLD_DAY_MS,
     });
+    w.everBuiltHouse = true;
     toast('🏠 Casa de madeira construída! Os bichinhos selvagens vão evitar essa área.');
     return;
   }
@@ -982,6 +855,7 @@ function tryBuildStoneHouse(w, placedGx, placedGy){
       builtAt: Date.now(),
       expiresAt: Date.now() + WORLD_HOUSE_LIFETIME_DAYS.stone[1] * WORLD_DAY_MS,
     });
+    w.everBuiltHouse = true;
     toast('🪨🏠 Casa de pedra construída! Bem mais resistente que a de madeira.');
     return;
   }
@@ -1176,7 +1050,6 @@ function closeWorld(){
   worldRAF = null;
   saveState();
   toggleWorldInventory(false);
-  toggleWorldElderDialog(false);
   document.getElementById('screen-world').classList.remove('active');
   document.getElementById('screen-home').classList.add('active');
   renderHome();
@@ -1222,17 +1095,6 @@ function worldLoop(ts){
   } else {
     const innerEl = document.getElementById('worldPlayerImgInner');
     if(innerEl) innerEl.classList.remove('walking');
-  }
-
-  // ancião: na primeiríssima visita, o diálogo de boas-vindas abre sozinho
-  // quando o player chega bem perto (depois disso só abre se ele clicar).
-  // usa renderElderDialog() pra escolher entre boas-vindas e a 2ª fala (caso o save
-  // já tenha casa construída e ainda não viu o aviso).
-  if(!w.hasMetElder && Math.hypot(w.x - WORLD_ELDER_POS.x, w.y - WORLD_ELDER_POS.y) <= WORLD_ELDER_AUTO_RADIUS){
-    w.hasMetElder = true;
-    saveState();
-    renderElderDialog();
-    toggleWorldElderDialog(true);
   }
 
   const now = Date.now();
