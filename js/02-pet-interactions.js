@@ -59,12 +59,12 @@ const WORLD_ROCK_HITS_NEEDED = 20; // mãos vazias: precisa de 20 toques pra que
 const WORLD_ROCK_COUNT = 16;
 const WORLD_ROCK_RADIUS = 70;
 const WORLD_ROCK_RESPAWN_MS = 30000;
-const WORLD_ENEMY_COUNT = 6;
+const WORLD_ENEMY_COUNT = 8;
 const WORLD_ENEMY_RADIUS = 55; // distância máxima pra conseguir clicar e entrar em duelo
 const WORLD_ENEMY_FLEE_RADIUS = 190; // distância em que o bichinho selvagem percebe o player e foge
 const WORLD_ENEMY_SPEED = 80; // px/s — mais lento que o player (velocidade normal, vagando)
 const WORLD_ENEMY_FLEE_SPEED = 130; // px/s — mais rápido quando está fugindo do player
-const WORLD_CYCLE_MS = 7 * 60 * 1000; // dia e noite duram 7 minutos cada
+const WORLD_CYCLE_MS = 6 * 60 * 1000; // dia e noite duram 6 minutos cada
 const WORLD_DAY_MS = WORLD_CYCLE_MS * 2; // 1 "dia do mundo" = 1 ciclo dia+noite completo
 const WORLD_MOVE_SPEED = 220; // px/s
 const WORLD_PLAYER_MARGIN = 45; // barreira invisível: mantém o player longe o bastante da borda do mapa pra não ficar cortado pela viewport
