@@ -1,5 +1,11 @@
 function computePuloLevel(score){ return 1 + Math.floor(score/40); }
 
+// teto de recompensa por sessão (ver endPulo) — a pontuação aqui cresce direto com o
+// TEMPO sobrevivido (não com quantas pedras foram puladas), e como a velocidade tem um
+// teto (PULO_MAX_SPEED), uma corrida longa e tranquila rendia energia sem limite
+const PULO_MAX_STAT_GAIN = 25;
+const PULO_MAX_COIN_GAIN = 20;
+
 function startPulo(){
   hideAllScreens();
   document.getElementById('screen-pulo').classList.add('active');
@@ -175,8 +181,8 @@ function endPulo(){
   const finalScore = Math.floor(puloScore);
   if(finalScore > (state.puloBest || 0)) state.puloBest = finalScore;
 
-  const statGain = Math.max(1, Math.round(finalScore/12));
-  const coinGain = Math.max(1, Math.round(finalScore/20));
+  const statGain = Math.min(PULO_MAX_STAT_GAIN, Math.max(1, Math.round(finalScore/12)));
+  const coinGain = Math.min(PULO_MAX_COIN_GAIN, Math.max(1, Math.round(finalScore/20)));
   finishTraining('screen-pulo', 'energia', statGain, coinGain,
     finalScore >= 80 ? 'Correu que só!' : 'Treino concluído!',
     `Você fugiu por ${finalScore}m antes de esbarrar numa pedra, no nível ${puloLevel}.`);

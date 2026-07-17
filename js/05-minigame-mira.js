@@ -19,6 +19,14 @@ const MIRA_RINGS = [
   { frac:0.12, color:'#141414', points:500 },
 ];
 
+// teto de recompensa por sessão (ver endMira) — sem isso, uma sequência boa de
+// centro (500 pontos por acerto) somada ao multiplicador de XP (que também cresce
+// dentro da mesma partida conforme o nível de velocidade sobe) rendia ganhos
+// explosivos e pulava vários níveis de personagem de uma vez só
+const MIRA_MAX_STAT_GAIN = 25;
+const MIRA_MAX_COIN_GAIN = 20;
+const MIRA_MAX_XP_GAIN = 70;
+
 function hideAllScreens(){
   document.querySelectorAll('.screen.active').forEach(s => s.classList.remove('active'));
 }
@@ -199,9 +207,9 @@ function endMira(){
   miraActive = false;
   clearInterval(miraInterval);
 
-  const statGain = Math.max(1, Math.round(miraScore / 120));
-  const coinGain = Math.max(1, Math.round(miraScore / 250));
-  const xpGain = Math.round(statGain * 2 * miraXpMultiplier);
+  const statGain = Math.min(MIRA_MAX_STAT_GAIN, Math.max(1, Math.round(miraScore / 120)));
+  const coinGain = Math.min(MIRA_MAX_COIN_GAIN, Math.max(1, Math.round(miraScore / 250)));
+  const xpGain = Math.min(MIRA_MAX_XP_GAIN, Math.round(statGain * 2 * miraXpMultiplier));
   const oldLevel = levelFromXp(state.xp);
 
   state.stats.precisao += statGain;
