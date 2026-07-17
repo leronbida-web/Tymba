@@ -802,6 +802,13 @@ function slayWorldEnemyWithSword(id){
   if(!e || !e.alive) return;
 
   swingPlayerSword();
+  killWorldEnemyAndRespawn(e, '🗡️ Bichinho selvagem abatido!');
+}
+
+// recompensa + "renascimento" de um bichinho selvagem abatido — usado tanto pela
+// espada (abate na hora) quanto pelos tiros (depois de WORLD_ENEMY_SHOT_HITS_NEEDED acertos)
+function killWorldEnemyAndRespawn(e, toastMsg){
+  const w = state.world;
   state.coins = (state.coins || 0) + WORLD_ENEMY_KILL_COINS;
 
   // dropa 1 material baseado no elemento do bichinho abatido (antes de sortear o novo elemento!)
@@ -812,7 +819,7 @@ function slayWorldEnemyWithSword(id){
     dropLabel = drop.label;
   }
   const dropSuffix = dropLabel ? ' +1 ' + dropLabel : '';
-  toast('🗡️ Bichinho selvagem abatido! +' + WORLD_ENEMY_KILL_COINS + ' moedas' + dropSuffix);
+  toast(toastMsg + ' +' + WORLD_ENEMY_KILL_COINS + ' moedas' + dropSuffix);
 
   const spot = worldRandomSpotAwayFromHouses(140);
   const target = worldRandomSpotAwayFromHouses(140);
@@ -820,6 +827,7 @@ function slayWorldEnemyWithSword(id){
   e.tx = target.x; e.ty = target.y;
   e.element = randomElement(); // "novo" bichinho selvagem, então sorteia elemento de novo
   e.facing = 'front'; e.flip = false;
+  e.shotsTaken = 0; // zera a contagem de tiros pro novo bichinho que nasce ali
 
   updateEnemyVisualState(e, false); // move o bichinho na tela pro novo ponto imediatamente
   saveState();
@@ -831,11 +839,64 @@ function spawnEnemyBall(e, w){
   const el = ELEMENTS[e.element];
   worldBalls.push({
     id: 'ball' + (worldBallSeq++),
+    owner: 'enemy',
     x: e.x, y: e.y,
     vx: dx / dist * WORLD_NIGHT_BALL_SPEED,
     vy: dy / dist * WORLD_NIGHT_BALL_SPEED,
     color: el.c2, border: el.dark,
   });
+}
+
+// ---- Tiro do player: dispara na direção que o botão de direção (joystick) estiver
+// apontando. Precisa de 10 tiros pra abater um Tymba selvagem (em qualquer hora do dia). ----
+const WORLD_PLAYER_BALL_SPEED = 420;       // px/s — um pouco mais rápido que a bolinha inimiga
+const WORLD_PLAYER_BALL_HIT_RADIUS = 30;   // distância pra considerar que a bolinha acertou o bichinho
+const WORLD_ENEMY_SHOT_HITS_NEEDED = 10;   // tiros necessários pra abater um bichinho selvagem
+const WORLD_PLAYER_SHOT_COOLDOWN_MS = 260; // intervalo mínimo entre disparos, pra não virar metralhadora
+
+// guarda a última direção não-nula do joystick — é pra onde o player mira mesmo
+// depois de soltar o direcional, já que não faz sentido atirar "pra lugar nenhum"
+let worldAimVec = { x: 0, y: 1 };
+let worldLastShotAt = 0;
+
+function spawnPlayerBall(w){
+  const el = ELEMENTS[state.element];
+  worldBalls.push({
+    id: 'pball' + (worldBallSeq++),
+    owner: 'player',
+    x: w.x, y: w.y,
+    vx: worldAimVec.x * WORLD_PLAYER_BALL_SPEED,
+    vy: worldAimVec.y * WORLD_PLAYER_BALL_SPEED,
+    color: el.c2, border: el.dark,
+  });
+}
+
+function fireWorldPlayerShot(){
+  const w = state.world;
+  if(!w) return;
+  const now = Date.now();
+  if(now - worldLastShotAt < WORLD_PLAYER_SHOT_COOLDOWN_MS) return;
+  worldLastShotAt = now;
+  spawnPlayerBall(w);
+}
+
+function setupWorldShootButton(){
+  const btn = document.getElementById('worldShootBtn');
+  if(!btn || btn._wired) return;
+  btn._wired = true;
+  btn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    fireWorldPlayerShot();
+  });
+}
+
+// registra 1 tiro do player acertando um bichinho selvagem; ao chegar em
+// WORLD_ENEMY_SHOT_HITS_NEEDED, abate ele (mesma recompensa/respawn da espada)
+function registerWorldEnemyShotHit(e){
+  e.shotsTaken = (e.shotsTaken || 0) + 1;
+  if(e.shotsTaken >= WORLD_ENEMY_SHOT_HITS_NEEDED){
+    killWorldEnemyAndRespawn(e, '💥 Bichinho selvagem abatido a tiros!');
+  }
 }
 
 function updateWorldBalls(dt){
@@ -844,11 +905,24 @@ function updateWorldBalls(dt){
     const b = worldBalls[i];
     b.x += b.vx * dt;
     b.y += b.vy * dt;
-    if(Math.hypot(w.x - b.x, w.y - b.y) < WORLD_PLAYER_HIT_RADIUS){
+
+    if(b.owner === 'player'){
+      let hit = false;
+      for(const e of w.enemies){
+        if(!e.alive) continue;
+        if(Math.hypot(e.x - b.x, e.y - b.y) < WORLD_PLAYER_BALL_HIT_RADIUS){
+          registerWorldEnemyShotHit(e);
+          hit = true;
+          break;
+        }
+      }
+      if(hit){ worldBalls.splice(i, 1); continue; }
+    } else if(Math.hypot(w.x - b.x, w.y - b.y) < WORLD_PLAYER_HIT_RADIUS){
       worldBalls.splice(i, 1);
       registerWorldPlayerHit();
       continue;
     }
+
     if(b.x < -40 || b.x > WORLD_WIDTH + 40 || b.y < -40 || b.y > WORLD_HEIGHT + 40){
       worldBalls.splice(i, 1);
     }
@@ -1332,6 +1406,7 @@ function openWorld(){
   document.getElementById('screen-world').classList.add('active');
   setupWorldBackgrounds();
   setupWorldJoystick();
+  setupWorldShootButton();
   setupWorldGroundTap();
   renderWorldStatic();
   worldLastFrameTs = performance.now();
@@ -1372,6 +1447,11 @@ function worldLoop(ts){
     } else if(!worldCollidesAt(w, w.x, targetY)){
       w.y = targetY;
     }
+
+    // mira do tiro segue o direcional enquanto ele estiver sendo usado — fica
+    // "travada" nessa direção depois que o player solta o joystick
+    worldAimVec.x = nx;
+    worldAimVec.y = ny;
 
     // direção: costas quando anda pra cima (longe da câmera), frente quando desce ou anda de lado
     const newFacing = ny < -0.3 ? 'back' : 'front';
@@ -1561,13 +1641,17 @@ function worldLoop(ts){
       }
       updateEnemyVisualState(e, moving);
     }
-    updateWorldBalls(dt);
-    const hitsPill = document.getElementById('worldHitsPill');
-    const hitsCount = document.getElementById('worldHitsCount');
-    if(hitsPill) hitsPill.style.display = w.enemies.some(e=>e.alive) ? 'flex' : 'none';
-    if(hitsCount) hitsCount.textContent = worldPlayerHits;
-    if(worldRAF === null) return; // morreu durante updateWorldBalls: worldPlayerDeath já cancelou o loop
   }
+
+  // roda sempre (dia e noite): de noite os bichinhos atiram no player, mas o player
+  // pode atirar neles a qualquer hora do dia — então a física das bolinhas não pode
+  // ficar presa dentro do bloco "só de noite"
+  updateWorldBalls(dt);
+  const hitsPill = document.getElementById('worldHitsPill');
+  const hitsCount = document.getElementById('worldHitsCount');
+  if(hitsPill) hitsPill.style.display = (!cyc.isDay && w.enemies.some(e=>e.alive)) ? 'flex' : 'none';
+  if(hitsCount) hitsCount.textContent = worldPlayerHits;
+  if(worldRAF === null) return; // morreu durante updateWorldBalls: worldPlayerDeath já cancelou o loop
 
   const mins = Math.floor(cyc.phaseRemainMs / 60000);
   const secs = Math.floor((cyc.phaseRemainMs % 60000) / 1000);
