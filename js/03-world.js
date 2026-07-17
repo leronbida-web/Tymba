@@ -1432,6 +1432,11 @@ function worldLoop(ts){
   const w = state.world;
   if(!w){ worldRAF = null; return; }
 
+  // relógio do ciclo dia/noite: só soma tempo enquanto este loop está de fato rodando
+  // (ou seja, só com o modo mundo aberto). closeWorld() cancela o requestAnimationFrame,
+  // então fechar o jogo "pausa" o relógio — ele só volta a contar quando abre de novo.
+  w.elapsedMs = (w.elapsedMs || 0) + dt * 1000;
+
   const mag = Math.hypot(worldJoyVec.x, worldJoyVec.y);
   const moving = mag > 0.05;
   if(moving){
