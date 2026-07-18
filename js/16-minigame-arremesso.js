@@ -3,8 +3,11 @@
    — 3 passos por tentativa: trava o ÂNGULO (seta oscilando, toque trava),
      depois carrega a FORÇA (pressiona e arrasta pra trás, igual taco de
      sinuca — solta pra arremessar), depois a física 2D simples joga a
-     pedra por cima do MURO. Passou = ponto + muro sobe um pouco. Bateu
-     no muro (ou caiu antes dele) = falha, perde uma vida.
+     pedra por cima do MURO. O muro continua sendo o obstáculo (bater
+     nele = falha), mas agora o alvo de verdade é a BANDEIRA do outro
+     lado: só conta ponto (e sobe o nível) se a trajetória da pedra
+     cruzar exatamente a altura da bandeira — passar longe demais por
+     cima ou cair antes dela também é falha.
    — SEM teto de dificuldade de propósito (mesma filosofia aplicada nos
      outros minigames de vida/colisão nesta sessão): o muro sobe pra
      sempre e vira o próprio limite natural da sessão. O teto de
@@ -16,20 +19,24 @@ let arremessoPhase = 'angle'; // 'angle' | 'power' | 'flight' | 'result'
 let arremessoScore = 0, arremessoVidas = 3, arremessoWallLevel = 1;
 let arremessoAngle = 0, arremessoLockedAngle = 0, arremessoAngleStartTime = 0;
 let arremessoPower = 0, arremessoDragging = false, arremessoDragStartY = 0;
-let arremessoStone = null; // { x, y, vx, vy, wallChecked, passedWall }
+let arremessoStone = null; // { x, y, vx, vy, wallChecked, hitWall, flagChecked, hitFlag }
 let arremessoResultTimer = null;
+let arremessoEnding = false; // trava re-entrada quando o botão Voltar ou o fim natural já disparou finishTraining
 
 // geometria/física da cena — calculadas em pxs relativos ao canvas, então
 // funcionam do mesmo jeito em qualquer tamanho de tela (ver startArremesso)
 let arremessoGroundY = 0, arremessoWallX = 0, arremessoStoneRestX = 0, arremessoStoneRestY = 0;
 let arremessoGravity = 0, arremessoMinSpeed = 0, arremessoMaxSpeed = 0;
 let arremessoWallBaseH = 0, arremessoWallStepH = 0, arremessoStoneR = 0, arremessoCanvasTopOffset = 0;
+// geometria/alvo da bandeira (o mesmo desenho decorativo de antes, agora também é o alvo)
+let arremessoFlagX = 0, arremessoFlagPoleH = 0, arremessoFlagTopY = 0, arremessoFlagHitTopY = 0;
 
 const ARREMESSO_MIN_ANGLE = 20 * Math.PI / 180;
 const ARREMESSO_MAX_ANGLE = 75 * Math.PI / 180;
 const ARREMESSO_ANGLE_PERIOD_MS = 1300; // 1 ciclo completo (min→max→min) da seta
 const ARREMESSO_MAX_DRAG_PX = 130;      // arrastar essa distância pra trás = força máxima
 const ARREMESSO_RESULT_PAUSE_MS = 950;  // pausa mostrando o resultado antes da próxima tentativa
+const ARREMESSO_FLAG_TOP_TOLERANCE = 0.02; // margem (em fração da altura do canvas) acima da ponta da bandeira que ainda conta como acerto
 
 // teto de recompensa por sessão — rede de segurança, já que o muro sem teto
 // deve derrubar o jogador bem antes disso na prática
@@ -64,10 +71,18 @@ function startArremesso(){
   arremessoStoneR = Math.max(7, w * 0.022);
   arremessoCanvasTopOffset = arremessoCanvas.offsetTop;
 
+  // geometria da bandeira-alvo (mesma posição/formato decorativo de sempre,
+  // agora usada também como zona de acerto — ver drawArremessoScene)
+  arremessoFlagX = w * 0.90;
+  arremessoFlagPoleH = h * 0.18;
+  arremessoFlagTopY = arremessoGroundY - arremessoFlagPoleH;
+  arremessoFlagHitTopY = arremessoFlagTopY - h * ARREMESSO_FLAG_TOP_TOLERANCE;
+
   arremessoScore = 0;
   arremessoVidas = 3;
   arremessoWallLevel = 1;
   arremessoActive = true;
+  arremessoEnding = false;
   arremessoLastTime = 0;
   clearTimeout(arremessoResultTimer);
 
@@ -134,7 +149,9 @@ function launchArremessoStone(){
     vx: speed * Math.cos(arremessoLockedAngle),
     vy: -speed * Math.sin(arremessoLockedAngle),
     wallChecked: false,
-    passedWall: false,
+    hitWall: false,
+    flagChecked: false,
+    hitFlag: false,
   };
   arremessoPhase = 'flight';
   setArremessoInstructions('Lá vai a pedra...');
@@ -144,23 +161,26 @@ function currentArremessoWallHeight(){
   return arremessoWallBaseH + (arremessoWallLevel - 1) * arremessoWallStepH;
 }
 
-function resolveArremessoAttempt(success){
+function resolveArremessoAttempt(success, reason){
   arremessoPhase = 'result';
   if(success){
     arremessoScore++;
     arremessoWallLevel++;
     document.getElementById('arremessoScore').textContent = arremessoScore;
     document.getElementById('arremessoLevelLbl').textContent = arremessoWallLevel;
-    setArremessoInstructions('Passou por cima! O muro subiu 📈');
+    setArremessoInstructions('Acertou a bandeira! 🚩 O muro subiu');
     spawnMiraLevelUpPop(arremessoWallLevel, 'screen-arremesso');
   } else {
     arremessoVidas--;
     document.getElementById('arremessoVidas').textContent = arremessoVidas;
-    setArremessoInstructions('Não passou dessa vez...');
+    const msg = reason === 'muro' ? 'Bateu no muro!'
+      : reason === 'curto' ? 'Caiu antes da bandeira...'
+      : 'Passou longe demais da bandeira...';
+    setArremessoInstructions(msg);
   }
 
   if(arremessoVidas <= 0){
-    arremessoResultTimer = setTimeout(endArremesso, ARREMESSO_RESULT_PAUSE_MS);
+    arremessoResultTimer = setTimeout(() => endArremesso(), ARREMESSO_RESULT_PAUSE_MS);
   } else {
     arremessoResultTimer = setTimeout(beginArremessoAngleStep, ARREMESSO_RESULT_PAUSE_MS);
   }
@@ -192,19 +212,33 @@ function arremessoLoop(ts){
       const frac = (arremessoWallX - prevX) / (s.x - prevX || 1);
       const yAtWall = prevY + (s.y - prevY) * frac;
       const wallTopY = arremessoGroundY - currentArremessoWallHeight();
-      if(yAtWall <= wallTopY){
-        s.passedWall = true;
-      } else {
+      if(yAtWall > wallTopY){
         // bateu no muro: trava a pedra ali e cai reto
         s.x = arremessoWallX;
         s.y = yAtWall;
         s.vx = 0;
+        s.hitWall = true;
+      }
+    }
+
+    // cruzou o X da bandeira nesse frame (só chega aqui se não bateu no muro,
+    // já que bater no muro zera vx e a pedra nunca mais avança em X)?
+    if(!s.hitWall && !s.flagChecked && prevX < arremessoFlagX && s.x >= arremessoFlagX){
+      s.flagChecked = true;
+      const frac2 = (arremessoFlagX - prevX) / (s.x - prevX || 1);
+      const yAtFlag = prevY + (s.y - prevY) * frac2;
+      if(yAtFlag >= arremessoFlagHitTopY && yAtFlag <= arremessoGroundY){
+        s.hitFlag = true;
       }
     }
 
     if(s.y >= arremessoGroundY){
       s.y = arremessoGroundY;
-      resolveArremessoAttempt(!!s.passedWall);
+      let reason = null;
+      if(!s.hitFlag){
+        reason = s.hitWall ? 'muro' : (!s.flagChecked ? 'curto' : 'longe');
+      }
+      resolveArremessoAttempt(!!s.hitFlag, reason);
     }
   }
 
@@ -226,19 +260,20 @@ function drawArremessoScene(w, h){
   ctx.lineTo(w, arremessoGroundY);
   ctx.stroke();
 
-  // bandeirinha na área de pouso, só decorativo
-  const flagX = w * 0.90;
+  // bandeira-alvo: pousada na mesma posição decorativa de antes, agora é
+  // o alvo de verdade (acertar aqui = ponto). Um leve brilho na base do
+  // mastro reforça que é o objetivo, não só cenário.
   ctx.strokeStyle = 'rgba(255,255,255,0.6)';
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(flagX, arremessoGroundY);
-  ctx.lineTo(flagX, arremessoGroundY - h*0.18);
+  ctx.moveTo(arremessoFlagX, arremessoGroundY);
+  ctx.lineTo(arremessoFlagX, arremessoFlagTopY);
   ctx.stroke();
   ctx.fillStyle = '#F2762E';
   ctx.beginPath();
-  ctx.moveTo(flagX, arremessoGroundY - h*0.18);
-  ctx.lineTo(flagX + w*0.05, arremessoGroundY - h*0.155);
-  ctx.lineTo(flagX, arremessoGroundY - h*0.13);
+  ctx.moveTo(arremessoFlagX, arremessoFlagTopY);
+  ctx.lineTo(arremessoFlagX + w*0.05, arremessoFlagTopY + h*0.025);
+  ctx.lineTo(arremessoFlagX, arremessoFlagTopY + h*0.05);
   ctx.closePath();
   ctx.fill();
 
@@ -341,8 +376,9 @@ function drawArremessoPowerBar(ctx, w, h){
   ctx.strokeRect(barX, barY, barW, barH);
 }
 
-function endArremesso(){
+function endArremesso(forcedTitle){
   arremessoActive = false;
+  arremessoEnding = true;
   cancelAnimationFrame(arremessoRaf);
   clearTimeout(arremessoResultTimer);
   arremessoCanvas.onpointerdown = null;
@@ -352,7 +388,14 @@ function endArremesso(){
 
   const statGain = Math.min(ARREMESSO_MAX_STAT_GAIN, Math.max(1, Math.round(arremessoScore*0.6 + 1)));
   const coinGain = Math.min(ARREMESSO_MAX_COIN_GAIN, Math.max(1, Math.round(arremessoScore/2)));
-  finishTraining('screen-arremesso', 'forca', statGain, coinGain,
-    arremessoScore >= 12 ? 'Braço de ferro!' : 'Treino concluído!',
-    `Você passou a pedra por cima do muro ${arremessoScore} vezes, chegando no nível ${arremessoWallLevel}.`);
+  const title = forcedTitle || (arremessoScore >= 12 ? 'Braço de ferro!' : 'Treino concluído!');
+  finishTraining('screen-arremesso', 'forca', statGain, coinGain, title,
+    `Você acertou a bandeira ${arremessoScore} vezes, chegando no nível ${arremessoWallLevel}.`);
+}
+
+// botão Voltar: sai do arremesso a qualquer momento, levando o XP / força / moedas
+// já conquistados até aqui (mesma ideia do botão Voltar do cores2048).
+function arremessoBack(){
+  if(!arremessoActive || arremessoEnding) return;
+  endArremesso('Voltou pra casa!');
 }
