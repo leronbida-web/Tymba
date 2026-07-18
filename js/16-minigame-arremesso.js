@@ -54,6 +54,11 @@ function startArremesso(){
 
   const el = ELEMENTS[state.element];
   arremessoCanvas.style.background = `linear-gradient(180deg, ${el.c1}, ${el.dark})`;
+  // sem isso, arrastar o dedo pra baixo pra carregar a força é interpretado
+  // pelo navegador como um gesto de rolagem da página, que CANCELA o toque
+  // no meio do caminho (dispara pointercancel) — daí a pedra saindo com
+  // força baixa antes do jogador soltar o dedo de propósito.
+  arremessoCanvas.style.touchAction = 'none';
 
   arremessoCtx = arremessoCanvas.getContext('2d');
   const w = arremessoCanvas.width, h = arremessoCanvas.height;
@@ -130,6 +135,7 @@ function setArremessoInstructions(text){
 
 function handleArremessoPointerDown(e){
   if(!arremessoActive) return;
+  e.preventDefault();
   // trava o toque no canvas: sem isso, arrastar o dedo pra baixo (carregar força)
   // costuma sair da área pequena do canvas e o navegador solta o toque antes da hora
   try{ arremessoCanvas.setPointerCapture(e.pointerId); }catch(err){}
@@ -148,6 +154,7 @@ function handleArremessoPointerDown(e){
 
 function handleArremessoPointerMove(e){
   if(!arremessoActive || arremessoPhase !== 'power' || !arremessoDragging) return;
+  e.preventDefault();
   const dy = e.clientY - arremessoDragStartY; // arrastar pra baixo = puxando o "taco" pra trás
   arremessoPower = Math.max(0, Math.min(1, dy / ARREMESSO_MAX_DRAG_PX));
 }
