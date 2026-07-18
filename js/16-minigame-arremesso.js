@@ -116,6 +116,9 @@ function setArremessoInstructions(text){
 
 function handleArremessoPointerDown(e){
   if(!arremessoActive) return;
+  // trava o toque no canvas: sem isso, arrastar o dedo pra baixo (carregar força)
+  // costuma sair da área pequena do canvas e o navegador solta o toque antes da hora
+  try{ arremessoCanvas.setPointerCapture(e.pointerId); }catch(err){}
   if(arremessoPhase === 'angle'){
     arremessoLockedAngle = arremessoAngle;
     arremessoPhase = 'power';
