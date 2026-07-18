@@ -9,12 +9,17 @@ function defesaSpread(t){ return lerp(DEFESA_SPREAD_TOP, DEFESA_SPREAD_BOTTOM, t
 function defesaLaneX(lane, t, w){ return w/2 + (lane-1) * defesaSpread(t) * w; }
 function defesaScreenY(t, h, horizonY){ return horizonY + (h-horizonY) * defesaEase(t); }
 
-// --- sistema de níveis: nível 1 bem devagar, cada nível fica mais rápido ---
+// --- sistema de níveis: nível 1 bem devagar, cada nível fica mais rápido.
+// SEM teto de dificuldade de propósito: a ideia é a própria dificuldade virar
+// o limite natural da sessão (fica impossível continuar em algum momento),
+// em vez de travar e deixar sessões longas renderem recompensa sem fim.
+// O piso no spawnRate é só por segurança de performance (não deixar spawnar
+// bola em cima de bola no mesmo frame), não é um limite de dificuldade. ---
 function computeDefesaLevel(score){ return 1 + Math.floor(score/5); }
 
 function computeDefesaLevelParams(level){
-  const speedT = Math.min(1.15, defesaBaseSpeedT + (level-1)*0.052);
-  const spawnRate = Math.max(0.40, defesaBaseSpawn - (level-1)*0.085);
+  const speedT = defesaBaseSpeedT + (level-1)*0.052;
+  const spawnRate = Math.max(0.18, defesaBaseSpawn - (level-1)*0.085);
   return { speedT, spawnRate };
 }
 

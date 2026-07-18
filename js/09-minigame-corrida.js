@@ -132,6 +132,6 @@ let puloDistSinceSpawn=0, puloNextSpawnDist=0, puloGroundScrollX=0, puloCanvasTo
 const PULO_GRAVITY = 1750; // px/s² — mais baixa, dá um pulo mais flutuante e fácil de cronometrar
 const PULO_JUMP_VELOCITY = -740; // px/s, impulso do pulo
 const PULO_BASE_SPEED = 220; // sempre começa igual, independente do nível do bichinho, e mais devagar no início
-const PULO_MAX_SPEED = 600;
+// (removido o antigo teto PULO_MAX_SPEED — a velocidade agora sobe sem limite, ver puloLoop em 10-minigame-pulo.js)
 const PULO_OBSTACLE_GROUND_NUDGE = 8; // a sprite da pedra tem uma sombra/margem embutida na base; empurra um pouco pra baixo pra encostar certinho na linha do chão
 

@@ -88,8 +88,11 @@ function puloLoop(ts){
     puloJumping = false;
   }
 
-  // velocidade cresce aos poucos com a distância percorrida, até um teto — igual ao dino game
-  puloSpeed = Math.min(PULO_MAX_SPEED, PULO_BASE_SPEED + puloScore*1.1);
+  // velocidade cresce direto com a distância percorrida, sem teto de propósito — a
+  // própria velocidade vira o limite natural da corrida (fica impossível reagir a
+  // tempo em algum momento), em vez de travar e deixar sessões longas e tranquilas
+  // renderem energia sem fim
+  puloSpeed = PULO_BASE_SPEED + puloScore*1.1;
   puloScore += dt * (puloSpeed/9);
   puloGroundScrollX += puloSpeed*dt;
   document.getElementById('puloScoreLbl').textContent = Math.floor(puloScore);
