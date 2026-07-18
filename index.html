@@ -6,7 +6,7 @@
 <title>Bichinho Elemental</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=18">
+<link rel="stylesheet" href="css/style.css?v=19">
 </head>
 <body>
 <div id="app">
@@ -336,6 +336,7 @@
   <!-- ARREMESSO DE PESO MINIGAME (treina Força) -->
   <div class="screen" id="screen-arremesso">
     <div class="mira-wrap">
+      <button class="mira-back-btn" onclick="arremessoBack()" aria-label="Voltar">←</button>
       <div class="mira-hud">
         <div>💪 <span id="arremessoScore">0</span></div>
         <div>🧱 Muro <span id="arremessoLevelLbl">1</span></div>
@@ -381,6 +382,7 @@
   <!-- CORES MINIGAME (2048 de cores) -->
   <div class="screen" id="screen-cores">
     <div class="mira-wrap">
+      <button class="mira-back-btn" onclick="coresBack()" aria-label="Voltar">←</button>
       <div class="mira-hud">
         <div>🎨 <span id="coresScore">0</span></div>
         <div>🏆 <span id="coresBest">0</span></div>
@@ -527,21 +529,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-<script src="js/01-core-state.js?v=18"></script>
-<script src="js/02-pet-interactions.js?v=18"></script>
-<script src="js/03-world.js?v=18"></script>
-<script src="js/04-render-core.js?v=18"></script>
-<script src="js/05-minigame-mira.js?v=18"></script>
-<script src="js/06-evolution-training.js?v=18"></script>
-<script src="js/07-minigame-defesa.js?v=18"></script>
-<script src="js/08-minigame-especial.js?v=18"></script>
-<script src="js/09-minigame-corrida.js?v=18"></script>
-<script src="js/10-minigame-pulo.js?v=18"></script>
-<script src="js/11-minigame-cores2048.js?v=18"></script>
-<script src="js/12-poderes-status.js?v=18"></script>
-<script src="js/13-duel-core.js?v=18"></script>
-<script src="js/14-duel-online.js?v=18"></script>
-<script src="js/15-dev-tools.js?v=18"></script>
-<script src="js/16-minigame-arremesso.js?v=18"></script>
+<script src="js/01-core-state.js?v=19"></script>
+<script src="js/02-pet-interactions.js?v=19"></script>
+<script src="js/03-world.js?v=19"></script>
+<script src="js/04-render-core.js?v=19"></script>
+<script src="js/05-minigame-mira.js?v=19"></script>
+<script src="js/06-evolution-training.js?v=19"></script>
+<script src="js/07-minigame-defesa.js?v=19"></script>
+<script src="js/08-minigame-especial.js?v=19"></script>
+<script src="js/09-minigame-corrida.js?v=19"></script>
+<script src="js/10-minigame-pulo.js?v=19"></script>
+<script src="js/11-minigame-cores2048.js?v=19"></script>
+<script src="js/12-poderes-status.js?v=19"></script>
+<script src="js/13-duel-core.js?v=19"></script>
+<script src="js/14-duel-online.js?v=19"></script>
+<script src="js/15-dev-tools.js?v=19"></script>
+<script src="js/16-minigame-arremesso.js?v=19"></script>
 </body>
 </html>
