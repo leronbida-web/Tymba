@@ -244,7 +244,16 @@ function startCores(){
 
 function coresEndGame(){
   // pontuação 2048 (clássica) já tá em coresScore
-  // statGain escalando pelo maxTile alcançado + bônus de pontuação
+  const reached2048 = coresMaxTile >= 11;
+  const title = reached2048
+    ? 'VOCÊ CHEGOU EM 2048! 🏆'
+    : (coresMaxTile >= 9 ? 'Quase em 2048!' : 'Treino concluído!');
+  coresClaimReward(title);
+}
+
+// calcula XP / inteligência / moedas a partir do coresMaxTile e coresScore atuais.
+// mesma fórmula usada pelo game over — extraída pra ser reusada pelo botão Voltar.
+function coresCalcReward(){
   const maxVal = CORES_TILE_VALUE(coresMaxTile);
   let statGain;
   if(coresMaxTile >= 11) statGain = 25;          // 2048!
@@ -260,16 +269,31 @@ function coresEndGame(){
   statGain += Math.round(coresScore / 50);
 
   const coinGain = Math.max(1, Math.round(coresScore / 20) + Math.floor(coresMaxTile / 2));
+  return { maxVal, statGain, coinGain };
+}
 
+// entrega a recompensa do 2048: atualiza best, salva e chama finishTraining
+// (que troca pra home + mostra o modal de resultado com XP / int / moedas)
+function coresClaimReward(title){
+  const { maxVal, statGain, coinGain } = coresCalcReward();
   if(coresScore > (state.coresBest || 0)){
     state.coresBest = coresScore;
     saveState();
   }
-
   const reached2048 = coresMaxTile >= 11;
-  finishTraining('screen-cores','inteligencia', statGain, coinGain,
-    reached2048 ? 'VOCÊ CHEGOU EM 2048! 🏆' : (coresMaxTile >= 9 ? 'Quase em 2048!' : 'Treino concluído!'),
-    `Peça máxima: ${maxVal}. Pontos: ${coresScore}.${reached2048 ? ' Bônus máximo de Inteligência!' : ''}`);
+  const sub = `Peça máxima: ${maxVal}. Pontos: ${coresScore}.${reached2048 ? ' Bônus máximo de Inteligência!' : ''}`;
+  finishTraining('screen-cores','inteligencia', statGain, coinGain, title, sub);
+}
+
+// botão Voltar: sai do 2048 a qualquer momento, levando o XP / inteligência / moedas
+// já conquistados até aqui (calculados pela mesma fórmula do game over).
+function coresBack(){
+  // se já tá terminando (game over chamando finishTraining), não faz nada
+  if(coresGameOver) return;
+  // trava novos movimentos até o finishTraining trocar de tela
+  coresGameOver = true;
+  coresBusy = true;
+  coresClaimReward('Voltou pra casa!');
 }
 
 /* =========================================================

@@ -530,12 +530,31 @@
   }
   #duelSetup input::placeholder{color:rgba(255,255,255,0.5);}
 
+  /* ---------- Botão Voltar dos minigames (canto superior esquerdo) ---------- */
+  .minigame-back-btn{
+    position:absolute; top:12px; left:12px; z-index:10;
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px;
+    background:rgba(0,0,0,0.45);
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.25);
+    border-radius:999px;
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:13px;
+    cursor:pointer;
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    box-shadow:0 4px 10px rgba(0,0,0,0.25);
+    transition:transform .15s ease, background .15s ease;
+  }
+  .minigame-back-btn:hover{ background:rgba(0,0,0,0.65); }
+  .minigame-back-btn:active{ transform:translateY(1px); }
+
   /* ---------- Minigame: Cores (2048) ---------- */
   #screen-cores{
     padding:0;
     background:linear-gradient(180deg, #2E1F3B 0%, #1B1230 100%);
   }
-  #screen-cores .mira-hud{ background:transparent; }
+  #screen-cores .mira-hud{ background:transparent; padding-left:96px; }
   .cores-board{
     flex:1; margin:6px 14px 14px;
     display:grid;
