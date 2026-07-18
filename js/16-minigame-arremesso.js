@@ -89,7 +89,21 @@ function startArremesso(){
   document.getElementById('arremessoScore').textContent = arremessoScore;
   document.getElementById('arremessoVidas').textContent = arremessoVidas;
   document.getElementById('arremessoLevelLbl').textContent = arremessoWallLevel;
-  document.getElementById('arremessoPetSvg').innerHTML = blobSvg(state.element, { evolved: state.evolved, wobble: true });
+  const arremessoPetEl = document.getElementById('arremessoPetSvg');
+  arremessoPetEl.innerHTML = blobSvg(state.element, { evolved: state.evolved, wobble: true });
+
+  // posiciona o bichinho primeiro (aproximação inicial, mesma conta de antes)...
+  arremessoPetEl.style.left = arremessoStoneRestX - w*0.05 + 'px';
+  arremessoPetEl.style.top = arremessoGroundY + arremessoCanvasTopOffset + 'px';
+
+  // ...e então mede onde ele REALMENTE caiu na tela (depende do tamanho do
+  // sprite renderizado, que não controlamos aqui), pra ancorar a pedra
+  // exatamente ali — assim ela sempre sai visualmente do corpo do
+  // bichinho, e não de um ponto solto do cenário que só coincide às vezes.
+  const arremessoCanvasRect = arremessoCanvas.getBoundingClientRect();
+  const arremessoPetRect = arremessoPetEl.getBoundingClientRect();
+  arremessoStoneRestX = (arremessoPetRect.left + arremessoPetRect.width * 0.5) - arremessoCanvasRect.left;
+  arremessoStoneRestY = (arremessoPetRect.top + arremessoPetRect.height * 0.38) - arremessoCanvasRect.top;
 
   arremessoCanvas.onpointerdown = handleArremessoPointerDown;
   arremessoCanvas.onpointermove = handleArremessoPointerMove;
@@ -320,12 +334,8 @@ function drawArremessoScene(w, h){
     drawArremessoPowerBar(ctx, w, h);
   }
 
-  // bichinho
-  const petEl = document.getElementById('arremessoPetSvg');
-  if(petEl){
-    petEl.style.left = arremessoStoneRestX - w*0.05 + 'px';
-    petEl.style.top = arremessoGroundY + arremessoCanvasTopOffset + 'px';
-  }
+  // bichinho: já foi posicionado uma vez em startArremesso (é onde a pedra
+  // foi ancorada), não precisa reposicionar a cada frame.
 }
 
 function drawArremessoAngleArrow(ctx, x, y, angle, len){
