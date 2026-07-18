@@ -157,8 +157,8 @@ function applyDecay(s){
   const dayMs = 1000*60*60*24;
   // só decai o que já tem minigame pra ser retreinado; Precisão treina com Mira,
   // Velocidade com Corrida, Resistência com Defesa, Especial com o minigame Especial,
-  // Inteligência treina com Cores, Energia treina com Pulo. Força ainda não tem minigame.
-  ['velocidade','resistencia','especial','precisao','inteligencia','energia'].forEach(stat=>{
+  // Inteligência treina com Cores, Energia treina com Pulo, Força treina com Arremesso de Peso.
+  ['velocidade','resistencia','especial','precisao','inteligencia','energia','forca'].forEach(stat=>{
     const last = s.lastTrained[stat] || s.createdAt;
     const daysPassed = Math.floor((now - last) / dayMs);
     if(daysPassed > 0){

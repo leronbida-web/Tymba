@@ -238,6 +238,11 @@
       <button class="train-card" onclick="startMira()">
         <div class="icon">🎯</div>
         <div class="title">Mira</div>
+        <div class="sub">Treina Precisão</div>
+      </button>
+      <button class="train-card" onclick="startArremesso()">
+        <div class="icon">💪</div>
+        <div class="title">Arremesso de Peso</div>
         <div class="sub">Treina Força</div>
       </button>
       <button class="train-card" onclick="startDefesa()">
@@ -328,6 +333,20 @@
     </div>
   </div>
 
+  <!-- ARREMESSO DE PESO MINIGAME (treina Força) -->
+  <div class="screen" id="screen-arremesso">
+    <div class="mira-wrap">
+      <div class="mira-hud">
+        <div>💪 <span id="arremessoScore">0</span></div>
+        <div>🧱 Muro <span id="arremessoLevelLbl">1</span></div>
+        <div>❤️ <span id="arremessoVidas">3</span></div>
+      </div>
+      <canvas id="arremessoCanvas"></canvas>
+      <svg id="arremessoPetSvg" class="arremesso-pet" viewBox="0 0 200 200"></svg>
+      <div class="mira-instructions" id="arremessoInstructions">Toque na tela quando o ângulo estiver bom, pra travar!</div>
+    </div>
+  </div>
+
   <!-- CORRIDA MINIGAME -->
   <div class="screen" id="screen-corrida">
     <div class="mira-wrap">
@@ -362,9 +381,6 @@
   <!-- CORES MINIGAME (2048 de cores) -->
   <div class="screen" id="screen-cores">
     <div class="mira-wrap">
-      <button class="minigame-back-btn" id="coresBackBtn" onclick="coresBack()" aria-label="Voltar pra tela inicial">
-        ← <span>Voltar</span>
-      </button>
       <div class="mira-hud">
         <div>🎨 <span id="coresScore">0</span></div>
         <div>🏆 <span id="coresBest">0</span></div>
@@ -526,5 +542,6 @@
 <script src="js/13-duel-core.js?v=18"></script>
 <script src="js/14-duel-online.js?v=18"></script>
 <script src="js/15-dev-tools.js?v=18"></script>
+<script src="js/16-minigame-arremesso.js?v=18"></script>
 </body>
 </html>
