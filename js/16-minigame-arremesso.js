@@ -32,7 +32,7 @@ let arremessoWallBaseH = 0, arremessoWallStepH = 0, arremessoStoneR = 0, arremes
 let arremessoFlagX = 0, arremessoFlagPoleH = 0, arremessoFlagTopY = 0;
 
 const ARREMESSO_MIN_ANGLE = 20 * Math.PI / 180;
-const ARREMESSO_MAX_ANGLE = 75 * Math.PI / 180;
+const ARREMESSO_MAX_ANGLE = 90 * Math.PI / 180;
 const ARREMESSO_ANGLE_PERIOD_MS = 1300; // 1 ciclo completo (min→max→min) da seta
 const ARREMESSO_MAX_DRAG_PX = 130;      // arrastar essa distância pra trás = força máxima
 const ARREMESSO_RESULT_PAUSE_MS = 950;  // pausa mostrando o resultado antes da próxima tentativa
