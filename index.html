@@ -6,7 +6,7 @@
 <title>Bichinho Elemental</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=21">
+<link rel="stylesheet" href="css/style.css?v=20">
 </head>
 <body>
 <div id="app">
@@ -238,11 +238,6 @@
       <button class="train-card" onclick="startMira()">
         <div class="icon">🎯</div>
         <div class="title">Mira</div>
-        <div class="sub">Treina Precisão</div>
-      </button>
-      <button class="train-card" onclick="startArremesso()">
-        <div class="icon">💪</div>
-        <div class="title">Arremesso de Peso</div>
         <div class="sub">Treina Força</div>
       </button>
       <button class="train-card" onclick="startDefesa()">
@@ -269,6 +264,16 @@
         <div class="icon">🔋</div>
         <div class="title">Pulo</div>
         <div class="sub">Treina Energia</div>
+      </button>
+      <button class="train-card" onclick="startForca()">
+        <div class="icon">💪</div>
+        <div class="title">Arremesso</div>
+        <div class="sub">Treina Força</div>
+      </button>
+      <button class="train-card" onclick="startEsquiva()">
+        <div class="icon">💨</div>
+        <div class="title">Esquiva</div>
+        <div class="sub">Treina Velocidade</div>
       </button>
     </div>
   </div>
@@ -333,21 +338,6 @@
     </div>
   </div>
 
-  <!-- ARREMESSO DE PESO MINIGAME (treina Força) -->
-  <div class="screen" id="screen-arremesso">
-    <div class="mira-wrap">
-      <button class="mira-back-btn" onclick="arremessoBack()" aria-label="Voltar">←</button>
-      <div class="mira-hud">
-        <div>💪 <span id="arremessoScore">0</span></div>
-        <div>🧱 Muro <span id="arremessoLevelLbl">1</span></div>
-        <div>❤️ <span id="arremessoVidas">3</span></div>
-      </div>
-      <canvas id="arremessoCanvas"></canvas>
-      <svg id="arremessoPetSvg" class="arremesso-pet" viewBox="0 0 200 200"></svg>
-      <div class="mira-instructions" id="arremessoInstructions">Toque na tela quando o ângulo estiver bom, pra travar!</div>
-    </div>
-  </div>
-
   <!-- CORRIDA MINIGAME -->
   <div class="screen" id="screen-corrida">
     <div class="mira-wrap">
@@ -382,7 +372,9 @@
   <!-- CORES MINIGAME (2048 de cores) -->
   <div class="screen" id="screen-cores">
     <div class="mira-wrap">
-      <button class="mira-back-btn" onclick="coresBack()" aria-label="Voltar">←</button>
+      <button class="minigame-back-btn" id="coresBackBtn" onclick="coresBack()" aria-label="Voltar pra tela inicial">
+        ← <span>Voltar</span>
+      </button>
       <div class="mira-hud">
         <div>🎨 <span id="coresScore">0</span></div>
         <div>🏆 <span id="coresBest">0</span></div>
@@ -390,6 +382,78 @@
       </div>
       <div class="cores-board" id="coresBoard" aria-label="Tabuleiro de cores"></div>
       <div class="mira-instructions">Deslize ⬆️⬇️⬅️➡️ pra fundir peças iguais. Tente chegar em 2048!</div>
+    </div>
+  </div>
+
+  <!-- FORÇA MINIGAME (Arremesso de Peso) -->
+  <div class="screen" id="screen-forca">
+    <div class="mira-wrap">
+      <div class="mira-hud">
+        <div>💪 Força: <span id="forcaStatValue">0</span></div>
+        <div>🏆 Recorde: <span id="forcaBestValue">0</span></div>
+        <div>🧱 Muro: <span id="forcaLevelValue">1</span></div>
+      </div>
+
+      <div class="forca-stage" id="forcaStage">
+        <!-- chão -->
+        <div class="forca-ground" id="forcaGround"></div>
+        <!-- muro (cresce em altura via JS) -->
+        <div class="forca-wall" id="forcaWall"></div>
+        <!-- Tymba (sprite do bichinho via blobSvg) -->
+        <div class="forca-tymba" id="forcaTymba"></div>
+        <!-- seta do ângulo (rotaciona via JS) -->
+        <div class="forca-arrow" id="forcaArrow"></div>
+        <!-- pedra arremessada -->
+        <div class="forca-stone" id="forcaStone" style="display:none;"></div>
+        <!-- barra de força (canto direito) -->
+        <div class="forca-force-wrap">
+          <div class="forca-force-bar" id="forcaForceBar">
+            <div class="forca-force-fill" id="forcaForceFill"></div>
+          </div>
+          <div class="forca-force-label" id="forcaForceLabel">—</div>
+        </div>
+        <!-- feedback de passe/falha -->
+        <div class="forca-feedback" id="forcaFeedback"></div>
+        <!-- texto da fase atual -->
+        <div class="forca-phase" id="forcaPhase">Toque pra travar o ÂNGULO</div>
+      </div>
+
+      <div class="forca-back-bar">
+        <button class="forca-back-btn" onclick="voltarDoForca()">Voltar e Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ESQUIVA MINIGAME (desviar de bolinhas — treina Velocidade) -->
+  <div class="screen" id="screen-esquiva">
+    <div class="mira-wrap">
+      <button class="minigame-back-btn" onclick="voltarDoEsquiva()" aria-label="Voltar pra tela inicial">
+        ← <span>Voltar</span>
+      </button>
+      <div class="mira-hud">
+        <div>💨 Velocidade: <span id="esquivaStatValue">0</span></div>
+        <div>🎯 Desviados: <span id="esquivaDodgedValue">0</span></div>
+        <div>💥 Vidas: <span id="esquivaHitsValue">0</span>/<span>10</span></div>
+        <div>⏱️ <span id="esquivaTimeValue">0s</span></div>
+      </div>
+
+      <div class="esquiva-stage" id="esquivaStage">
+        <canvas id="esquivaCanvas"></canvas>
+        <svg id="esquivaTymbaSvg" class="esquiva-pet" viewBox="0 0 200 200"></svg>
+        <div class="esquiva-hint">Arraste o dedo pra mover • 10 hits e acaba</div>
+
+        <!-- overlay de game over -->
+        <div class="esquiva-gameover" id="esquivaGameover" style="display:none;">
+          <div class="gameover-emoji">💥</div>
+          <div class="gameover-title">Fim de Jogo!</div>
+          <div class="gameover-stats">
+            <div><strong><span id="esquivaFinalDodged">0</span></strong> bolinhas desviadas</div>
+            <div>⏱️ <span id="esquivaFinalTime">0s</span></div>
+            <div>🏆 Pontos: <strong><span id="esquivaFinalScore">0</span></strong></div>
+          </div>
+          <button class="forca-back-btn" onclick="voltarDoEsquiva()">Voltar e Salvar</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -529,21 +593,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-<script src="js/01-core-state.js?v=21"></script>
-<script src="js/02-pet-interactions.js?v=21"></script>
-<script src="js/03-world.js?v=21"></script>
-<script src="js/04-render-core.js?v=21"></script>
-<script src="js/05-minigame-mira.js?v=21"></script>
-<script src="js/06-evolution-training.js?v=21"></script>
-<script src="js/07-minigame-defesa.js?v=21"></script>
-<script src="js/08-minigame-especial.js?v=21"></script>
-<script src="js/09-minigame-corrida.js?v=21"></script>
-<script src="js/10-minigame-pulo.js?v=21"></script>
-<script src="js/11-minigame-cores2048.js?v=21"></script>
-<script src="js/12-poderes-status.js?v=21"></script>
-<script src="js/13-duel-core.js?v=21"></script>
-<script src="js/14-duel-online.js?v=21"></script>
-<script src="js/15-dev-tools.js?v=21"></script>
-<script src="js/16-minigame-arremesso.js?v=21"></script>
+<script src="js/01-core-state.js?v=20"></script>
+<script src="js/02-pet-interactions.js?v=20"></script>
+<script src="js/03-world.js?v=20"></script>
+<script src="js/04-render-core.js?v=20"></script>
+<script src="js/05-minigame-mira.js?v=20"></script>
+<script src="js/06-evolution-training.js?v=20"></script>
+<script src="js/07-minigame-defesa.js?v=20"></script>
+<script src="js/08-minigame-especial.js?v=20"></script>
+<script src="js/09-minigame-corrida.js?v=20"></script>
+<script src="js/10-minigame-pulo.js?v=20"></script>
+<script src="js/11-minigame-cores2048.js?v=20"></script>
+<script src="js/12-poderes-status.js?v=20"></script>
+<script src="js/13-duel-core.js?v=20"></script>
+<script src="js/14-duel-online.js?v=20"></script>
+<script src="js/15-dev-tools.js?v=20"></script>
+<script src="js/16-minigame-forca.js?v=20"></script>
+<script src="js/17-minigame-esquiva.js?v=20"></script>
 </body>
 </html>

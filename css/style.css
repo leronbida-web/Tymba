@@ -383,7 +383,11 @@
     position:relative; flex:1 1 auto; overflow:hidden; min-height:0;
     background:
       radial-gradient(circle at 50% 0%, rgba(108,92,231,0.35), transparent 55%),
-      linear-gradient(180deg, #241a3d 0%, #1B1230 55%);
+      linear-gradient(180deg, rgba(36,26,61,0.55) 0%, rgba(27,18,48,0.78) 55%),
+      url("https://i.imgur.com/uulCRJZ.jpeg");
+    background-size: cover, cover, cover;
+    background-position: center, center, center;
+    background-repeat: no-repeat, no-repeat, no-repeat;
   }
   .duel-floor{ display:none; }
   .duel-opp{
@@ -526,12 +530,249 @@
   }
   #duelSetup input::placeholder{color:rgba(255,255,255,0.5);}
 
+  /* ---------- Botão Voltar dos minigames (canto superior esquerdo) ---------- */
+  .minigame-back-btn{
+    position:absolute; top:12px; left:12px; z-index:10;
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px;
+    background:rgba(0,0,0,0.45);
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.25);
+    border-radius:999px;
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:13px;
+    cursor:pointer;
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    box-shadow:0 4px 10px rgba(0,0,0,0.25);
+    transition:transform .15s ease, background .15s ease;
+  }
+  .minigame-back-btn:hover{ background:rgba(0,0,0,0.65); }
+  .minigame-back-btn:active{ transform:translateY(1px); }
+
+  /* ---------- Minigame: Força (Arremesso de Peso) ---------- */
+  #screen-forca{
+    padding:0;
+    background:linear-gradient(180deg, #2E1F3B 0%, #1B1230 100%);
+  }
+  #screen-forca .mira-hud{ background:transparent; }
+  .forca-stage{
+    position:relative; flex:1;
+    margin:6px 14px 10px;
+    background:linear-gradient(180deg, #6B95D0 0%, #A0C8E8 60%, #B8D8B0 100%);
+    border-radius:22px;
+    border:1px solid rgba(255,255,255,0.18);
+    box-shadow:inset 0 4px 12px rgba(0,0,0,0.3), 0 8px 22px rgba(0,0,0,0.25);
+    overflow:hidden;
+    min-height:280px;
+    touch-action:none;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  .forca-ground{
+    position:absolute; left:0; right:0; top:82%;
+    background:linear-gradient(180deg, #6B8B3E 0%, #4A6B2E 60%, #3D5B25 100%);
+    border-top:3px solid #2D4A1E;
+    box-shadow:inset 0 2px 0 rgba(255,255,255,0.12);
+  }
+  .forca-wall{
+    position:absolute; bottom:auto;
+    background:repeating-linear-gradient(45deg, #C68A5A 0 14px, #A8703E 14px 28px, #B57A4A 28px 42px);
+    border:2px solid #6B4A2E;
+    border-radius:6px 6px 0 0;
+    box-shadow:inset -3px 0 0 rgba(0,0,0,0.18), inset 3px 0 0 rgba(255,255,255,0.15), 0 4px 8px rgba(0,0,0,0.3);
+  }
+  .forca-tymba{
+    position:absolute;
+    width:56px; height:56px;
+    display:flex; align-items:center; justify-content:center;
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+    z-index:3;
+  }
+  .forca-tymba svg{ width:100%; height:100%; }
+  .forca-arrow{
+    position:absolute;
+    width:54px; height:8px;
+    transform-origin:0 50%;
+    background:linear-gradient(90deg, transparent 0%, #FFD65C 25%, #FF7A3E 100%);
+    border-radius:4px;
+    pointer-events:none;
+    z-index:4;
+    transition:opacity .25s ease;
+  }
+  .forca-arrow::after{
+    content:''; position:absolute; right:-3px; top:-9px;
+    border:13px solid transparent;
+    border-left-color:#FF7A3E;
+  }
+  .forca-stone{
+    width:16px; height:16px;
+    background:radial-gradient(circle at 35% 35%, #999 0%, #555 60%, #222 100%);
+    border-radius:50%;
+    box-shadow:0 2px 4px rgba(0,0,0,0.5);
+    z-index:5;
+  }
+  .forca-force-wrap{
+    position:absolute; right:18px; top:50%; transform:translateY(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    z-index:3;
+    pointer-events:none;
+  }
+  .forca-force-bar{
+    width:16px; height:200px;
+    background:rgba(0,0,0,0.4);
+    border:1px solid rgba(255,255,255,0.35);
+    border-radius:10px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 2px 6px rgba(0,0,0,0.3);
+    opacity:0.25;
+  }
+  .forca-force-bar.active{ opacity:1; }
+  .forca-force-fill{
+    position:absolute; left:0; right:0; bottom:0;
+    height:0%;
+    background:linear-gradient(0deg, #FFD65C 0%, #FF7A3E 50%, #E83E3E 100%);
+    border-radius:0 0 8px 8px;
+    transition:height .04s linear;
+  }
+  .forca-force-bar.locked .forca-force-fill{
+    background:linear-gradient(0deg, #6CE07A 0%, #2EA845 100%);
+    box-shadow:0 0 14px rgba(108,224,122,0.7);
+  }
+  .forca-force-label{
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:12px;
+    color:#fff; text-shadow:0 2px 4px rgba(0,0,0,0.6);
+    background:rgba(0,0,0,0.4);
+    padding:3px 8px;
+    border-radius:8px;
+    min-width:42px; text-align:center;
+  }
+  .forca-feedback{
+    position:absolute; left:50%; top:35%; transform:translate(-50%,-50%);
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:34px;
+    color:#fff; text-shadow:0 3px 10px rgba(0,0,0,0.7);
+    pointer-events:none; z-index:6;
+    opacity:0;
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  .forca-feedback.show{ opacity:1; transform:translate(-50%,-50%) scale(1.15); }
+  .forca-feedback.good{ color:#FFD65C; }
+  .forca-feedback.bad{ color:#FF8A8A; }
+  .forca-phase{
+    position:absolute; left:0; right:0; bottom:14px;
+    text-align:center;
+    color:rgba(255,255,255,0.95);
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:14px;
+    text-shadow:0 2px 4px rgba(0,0,0,0.7);
+    pointer-events:none; z-index:4;
+    letter-spacing:0.5px;
+  }
+  .forca-back-bar{
+    position:relative;
+    display:flex; justify-content:center;
+    padding:8px 16px 16px;
+  }
+  .forca-back-btn{
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:15px;
+    padding:12px 32px;
+    background:linear-gradient(180deg, #FFB36B 0%, #FF7A3E 100%);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.45);
+    border-radius:999px;
+    cursor:pointer;
+    box-shadow:0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+    transition:transform .15s ease, box-shadow .15s ease;
+    letter-spacing:0.3px;
+  }
+  .forca-back-btn:active{ transform:translateY(2px); box-shadow:0 2px 4px rgba(0,0,0,0.4); }
+
+  /* ---------- Minigame: Esquiva ---------- */
+  #screen-esquiva{
+    padding:0;
+    background:linear-gradient(180deg, #1B1B3A 0%, #0F0F22 100%);
+  }
+  #screen-esquiva .mira-hud{ background:transparent; padding-right:96px; }
+  .esquiva-stage{
+    position:relative; flex:1;
+    margin:6px 14px 14px;
+    background:radial-gradient(circle at 50% 50%, #2A2855 0%, #15133A 100%);
+    border-radius:22px;
+    border:1px solid rgba(255,255,255,0.15);
+    box-shadow:inset 0 4px 16px rgba(0,0,0,0.5), 0 8px 22px rgba(0,0,0,0.3);
+    overflow:hidden;
+    min-height:300px;
+    touch-action:none;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  .esquiva-stage canvas{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    display:block;
+  }
+  .esquiva-pet{
+    position:absolute; left:0; top:0;
+    width:64px; height:64px;
+    z-index:3;
+    pointer-events:none;
+    will-change:transform;
+  }
+  .esquiva-pet .blob-wobble{
+    transform-origin:100px 120px;
+    animation:esquivaWobble 1.6s ease-in-out infinite;
+  }
+  @keyframes esquivaWobble{
+    0%,100%{ transform:scale(1) translateY(0); }
+    50%{ transform:scale(1.04) translateY(-3px); }
+  }
+  .esquiva-hint{
+    position:absolute; left:0; right:0; top:14px;
+    text-align:center;
+    color:rgba(255,255,255,0.7);
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:12px;
+    text-shadow:0 2px 4px rgba(0,0,0,0.6);
+    pointer-events:none; z-index:4;
+    letter-spacing:0.3px;
+  }
+  .esquiva-gameover{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:rgba(0,0,0,0.72);
+    backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);
+    z-index:10;
+    padding:24px;
+    text-align:center;
+    animation:esquivaFadeIn .35s ease;
+  }
+  @keyframes esquivaFadeIn{
+    from{ opacity:0; }
+    to{ opacity:1; }
+  }
+  .gameover-emoji{ font-size:54px; margin-bottom:6px; }
+  .gameover-title{
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:28px;
+    color:#fff; text-shadow:0 2px 8px rgba(0,0,0,0.7);
+    margin-bottom:14px;
+  }
+  .gameover-stats{
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:14px;
+    color:rgba(255,255,255,0.95);
+    background:rgba(0,0,0,0.45);
+    padding:14px 20px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.15);
+    margin-bottom:18px;
+    line-height:1.8;
+  }
+  .gameover-stats strong{ color:#FFD65C; font-size:16px; }
+
   /* ---------- Minigame: Cores (2048) ---------- */
   #screen-cores{
     padding:0;
     background:linear-gradient(180deg, #2E1F3B 0%, #1B1230 100%);
   }
-  #screen-cores .mira-hud{ background:transparent; }
+  #screen-cores .mira-hud{ background:transparent; padding-left:96px; }
   .cores-board{
     flex:1; margin:6px 14px 14px;
     display:grid;
@@ -608,11 +849,6 @@
   .mira-hud div{font-family:'Fredoka'; font-weight:600;}
   #miraCanvas{flex:1; touch-action:none; display:block;}
   .mira-wrap{position:relative; flex:1; display:flex; flex-direction:column;}
-  .mira-back-btn{
-    position:absolute; top:14px; left:14px; z-index:3;
-    width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,0.4);
-    color:#fff; border:none; font-size:16px; display:flex; align-items:center; justify-content:center;
-  }
   .mira-instructions{
     position:absolute; bottom:20px; left:0; right:0; text-align:center;
     color:rgba(255,255,255,0.85); font-weight:800; font-size:13px; z-index:2;
@@ -664,11 +900,6 @@
   }
   .pulo-pet{
     position:absolute; width:92px; height:92px; z-index:2; pointer-events:none;
-    transform:translate(-50%,-100%);
-    filter:drop-shadow(0 8px 10px rgba(0,0,0,0.3));
-  }
-  .arremesso-pet{
-    position:absolute; width:100px; height:100px; z-index:2; pointer-events:none;
     transform:translate(-50%,-100%);
     filter:drop-shadow(0 8px 10px rgba(0,0,0,0.3));
   }
@@ -728,7 +959,30 @@
   .world-block{ position:absolute; width:44px; height:44px; transform:translate(-50%,-50%); border-radius:8px; z-index:4; box-shadow:0 4px 6px rgba(0,0,0,0.25); cursor:pointer; }
   .world-block.wood{ background:#A9713F; border:3px solid #7A4E28; }
   .world-block.stone{ background:#9AA0A6; border:3px solid #6B7075; }
+  /* cores sólidas dos 4 recursos que dropam de Tymbas selvagens — antes ficavam transparentes
+     por falta de regra no CSS (só wood e stone tinham) */
+  .world-block.ironOre{ background:#B8541E; border:3px solid #7A3812; }  /* laranja escuro */
+  .world-block.cotton { background:#5BA8E8; border:3px solid #3A7AB5; }  /* azul */
+  .world-block.match  { background:#D8332B; border:3px solid #8C1E18; }  /* vermelho */
+  .world-block.wax    { background:#F5F1E6; border:3px solid #C9C2A8; }  /* branco */
   .world-house{ position:absolute; filter:drop-shadow(0 6px 10px rgba(0,0,0,0.3)); pointer-events:none; }
+  .world-elder{ position:absolute; width:70px; height:70px; transform:translate(-50%,-70%); cursor:pointer; filter:drop-shadow(0 6px 8px rgba(0,0,0,0.45)); }
+  .world-elder img{ width:100%; height:100%; object-fit:contain; pointer-events:none; }
+  .world-elder-glow{ position:absolute; left:50%; bottom:-4px; width:36px; height:12px; transform:translateX(-50%); background:radial-gradient(ellipse at center, rgba(255,214,92,0.55) 0%, rgba(255,214,92,0) 75%); animation:worldElderPulse 1.8s ease-in-out infinite; }
+  @keyframes worldElderPulse{ 0%,100%{ opacity:0.5; } 50%{ opacity:1; } }
+  /* brilho na ponta do cajado do ancião. Padrão posiciona no canto superior-direito da sprite
+     (caso comum de cajado na mão direita levantado). Se a sprite tiver o cajado em outro canto,
+     só ajustar os valores de right/top aqui embaixo. Sem a classe .on, fica invisível. */
+  .world-elder-staff-glow{ position:absolute; right:4px; top:-2px; width:24px; height:24px; border-radius:50%; background:radial-gradient(circle, rgba(255,236,150,0.95) 0%, rgba(255,200,80,0.6) 35%, rgba(255,180,50,0) 70%); pointer-events:none; opacity:0; transform:scale(0.8); }
+  .world-elder-staff-glow.on{ animation:worldElderStaffGlow 1.6s ease-in-out infinite; }
+  @keyframes worldElderStaffGlow{ 0%,100%{ transform:scale(0.85); opacity:0.75; } 50%{ transform:scale(1.2); opacity:1; } }
+  .world-elder-panel{ text-align:center; padding:0 18px 18px; }
+  .world-elder-portrait{ width:96px; height:96px; margin:6px auto 12px; }
+  .world-elder-portrait img{ width:100%; height:100%; object-fit:contain; }
+  .world-elder-text{ font-size:13.5px; line-height:1.55; color:#3A3A3A; margin-bottom:16px; }
+  .world-elder-scroll-btn{ display:flex; flex-direction:column; align-items:center; gap:4px; margin:0 auto; border:none; background:none; cursor:pointer; padding:8px; }
+  .world-elder-scroll-btn .icon{ font-size:34px; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.25)); }
+  .world-elder-scroll-btn .label{ font-size:10.5px; font-weight:800; color:#8A5A2E; text-transform:uppercase; letter-spacing:0.3px; }
   .world-enemy{ position:absolute; width:64px; height:64px; transform:translate(-50%,-60%); cursor:pointer; filter:drop-shadow(0 6px 8px rgba(0,0,0,0.45)); }
   .world-enemy-sprite{ position:absolute; inset:0; }
   .world-enemy-sprite.flip{ transform:scaleX(-1); }
@@ -790,6 +1044,72 @@
   }
   .world-player-sword.show{ display:block; }
   .world-player-sword.swing{ animation:worldAxeSwing .22s ease-out; }
+  /* armadura no corpo do player — sobrepõe o torso do bichinho. Sprite vem do imgur,
+     background-size:contain pra escalar sem cortar. Se a sprite tiver tamanho/aspecto
+     diferente, ajusta width/height/top/left aqui */
+  .world-player-armor{
+    position:absolute;
+    inset:0;
+    background-image:url('https://i.imgur.com/5kY4SLP.png');
+    background-size:contain;
+    background-repeat:no-repeat;
+    background-position:center bottom;
+    pointer-events:none;
+    display:none;
+    z-index:1;
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+  }
+  .world-player-armor.show{ display:block; }
+  /* vela na mão esquerda do player — espelha a posição do machado (que fica na direita).
+     Usa o emoji 🔥 como conteúdo (até você mandar a sprite real) com glow alaranjado pra simular luz */
+  .world-player-candle{
+    position:absolute;
+    left:-8px;
+    bottom:14px;
+    width:28px; height:28px;
+    font-size:22px;
+    line-height:1;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+    z-index:2;
+    filter:drop-shadow(0 0 6px rgba(255,180,80,0.85)) drop-shadow(0 0 12px rgba(255,140,40,0.45));
+  }
+  .world-player-candle.show{ display:flex; }
+  /* halo de luz alaranjada em volta do player quando a vela está acesa.
+     A div fica fixa no world-viewport (depois do night-overlay) e é reposicionada
+     em coordenadas de TELA a cada frame do world loop (não usa coordenadas do mundo,
+     porque está fora do worldLayer que sofre transform da câmera).
+     Tem 220px (maior que o player de 64px) pra simular alcance de luz.
+     Cor: radial gradient laranja→transparente. Opacidade controlada por dia/noite. */
+  .world-player-glow{
+    position:absolute;
+    width:220px;
+    height:220px;
+    margin-left:-110px;  /* metade da largura — equivale a translateX(-50%) sem conflitar com a animação */
+    margin-top:-110px;
+    border-radius:50%;
+    background:radial-gradient(circle,
+      rgba(255,210,110,0.9) 0%,
+      rgba(255,170,70,0.6)  20%,
+      rgba(255,140,50,0.3)  45%,
+      rgba(255,120,40,0)    75%);
+    pointer-events:none;
+    z-index:9;            /* acima do night-overlay (z-index 8) */
+    opacity:0;
+    transition:opacity 1.2s linear;
+    will-change:transform,opacity;
+  }
+  .world-player-glow.show{ opacity:0.18; }                /* vela acesa de dia — bem sutil */
+  .world-player-glow.show.night{
+    opacity:0.9;                                           /* vela acesa de noite — bem visível */
+    animation:worldPlayerGlowPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes worldPlayerGlowPulse{
+    0%,100%{ transform:scale(1);    opacity:0.85; }
+    50%    { transform:scale(1.08); opacity:1;    }
+  }
   @keyframes worldWalkBob{ 0%,100%{ transform:translateY(0) scaleY(1); } 50%{ transform:translateY(-3px) scaleY(0.95); } }
   .night-overlay{ position:absolute; inset:0; background:#0B1340; opacity:0; pointer-events:none; z-index:8; transition:opacity 1.2s linear; }
   .world-hit-flash{ position:absolute; inset:0; background:#C0201A; opacity:0; pointer-events:none; z-index:9; transition:opacity .15s linear; }
@@ -826,3 +1146,11 @@
   .world-bottom-bar{ position:absolute; bottom:0; left:0; right:0; z-index:30; display:flex; justify-content:space-between; align-items:flex-end; padding:18px; }
   .world-joystick-zone{ width:104px; height:104px; border-radius:50%; background:rgba(255,255,255,0.2); border:2px solid rgba(255,255,255,0.45); position:relative; touch-action:none; }
   .world-joystick-thumb{ width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.9); position:absolute; top:30px; left:30px; box-shadow:0 4px 8px rgba(0,0,0,0.25); }
+  .world-shoot-btn{
+    width:78px; height:78px; border-radius:50%; align-self:center;
+    background:rgba(192,32,26,0.35); border:2px solid rgba(255,255,255,0.45);
+    font-size:30px; display:flex; align-items:center; justify-content:center;
+    touch-action:none; -webkit-tap-highlight-color:transparent; user-select:none;
+    transition:transform .08s ease, background .08s ease;
+  }
+  .world-shoot-btn:active{ transform:scale(0.9); background:rgba(192,32,26,0.55); }
