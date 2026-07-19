@@ -938,6 +938,9 @@
   .reward-item{display:flex; flex-direction:column; align-items:center; gap:4px;}
   .reward-item .num{font-family:'Fredoka'; font-weight:600; font-size:18px;}
   .reward-item .lbl{font-size:10.5px; font-weight:800; color:var(--ink-soft); text-transform:uppercase;}
+  #rewardStatMulti{flex-direction:row; gap:10px; }
+  #rewardStatMulti .num{font-size:15px;}
+  #rewardStatMulti .lbl{font-size:9px;}
 
   /* Evolution modal special */
   .evo-title{font-size:22px; background:linear-gradient(90deg,var(--accent),#B18CFF); -webkit-background-clip:text; background-clip:text; color:transparent;}

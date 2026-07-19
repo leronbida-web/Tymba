@@ -33,6 +33,9 @@ const ESQUIVA_BALL_R_MAX = 13;
 const ESQUIVA_TYMBA_R = 32;          // raio de colisão (px) — coincide com a sprite
 const ESQUIVA_GAME_OVER_DELAY = 700; // ms entre o hit fatal e o overlay
 
+// cores das bolinhas: azul, branco e marrom (sorteio aleatório independente do elemento do bichinho)
+const ESQUIVA_BALL_COLORS = ['#3B82F6', '#FFFFFF', '#8B5A2B'];
+
 function startEsquiva(){
   hideAllScreens();
   document.getElementById('screen-esquiva').classList.add('active');
@@ -246,11 +249,8 @@ function esquivaSpawn(curSpeed){
   const vx = dx / len * speed;
   const vy = dy / len * speed;
 
-  // cor = elemento do bichinho (mistura c1/c2 pra ter variação)
-  const el = ELEMENTS[state.element];
-  const palette = [el.c1, el.c2];
-  if(el.special_color) palette.push(el.special_color);
-  const color = palette[Math.floor(Math.random() * palette.length)];
+  // cor sorteada da paleta fixa (azul / branco / marrom)
+  const color = ESQUIVA_BALL_COLORS[Math.floor(Math.random() * ESQUIVA_BALL_COLORS.length)];
 
   esquivaBalls.push({ x, y, vx, vy, r, color, life: 0 });
 }
@@ -326,26 +326,71 @@ function esquivaRender(){
 }
 
 // botão "Voltar" (no canto superior esquerdo) — entrega recompensa proporcional e vai pra home
+// distribui o ganho entre velocidade, precisão e energia (33,33% cada, com o resto indo 1 pra cada)
 function voltarDoEsquiva(){
   if(esquivaRaf){ cancelAnimationFrame(esquivaRaf); esquivaRaf = null; }
   esquivaActive = false;
 
-  // se o jogo já tinha acabado naturalmente, mantém o score que foi mostrado
-  // se saiu no meio, ainda assim calcula a recompensa com o progresso atual
   const tElapsed = (performance.now() - esquivaStartTime) / 1000;
-  // mesma fórmula do fim de jogo pra ser consistente
-  const statGain = Math.max(1, Math.floor(tElapsed / 5) + Math.floor(esquivaDodged / 8));
+  // ganho total (mesma fórmula do game over, pra ser consistente)
+  const totalStat = Math.max(1, Math.floor(tElapsed / 5) + Math.floor(esquivaDodged / 8));
   const coinGain = Math.max(1, Math.floor(esquivaDodged / 3) + Math.floor(tElapsed / 12));
-  const title = esquivaDodged >= 60 ? 'Esquiva LENDÁRIA! ⚡'
-              : (esquivaDodged >= 25 ? 'Bons reflexos! 💨'
-              : (esquivaHits >= ESQUIVA_MAX_HITS ? 'Game Over — mas foi boa!' : 'Voltou cedo!'));
-  const sub = `Bolinhas desviadas: ${esquivaDodged}. Tempo: ${Math.floor(tElapsed)}s.${esquivaGameOverShown ? '' : ' Saiu antes do game over.'}`;
+
+  // divide em 3 partes (33,33% cada). Ex: total=10 → 3+3+3, depois distribui o resto (1) na velocidade
+  const base = Math.floor(totalStat / 3);
+  let vel = base, pre = base, ene = base;
+  const rem = totalStat - base * 3;
+  if(rem >= 1) vel += 1;
+  if(rem >= 2) pre += 1;
+  if(rem >= 3) ene += 1;
+
+  // XP baseado no total (não multiplica por 3), seguindo o padrão do projeto (statGain * 2)
+  const xpGain = totalStat * 2;
+
+  // aplica nos 3 stats
+  state.stats.velocidade += vel;
+  state.stats.precisao += pre;
+  state.stats.energia += ene;
+  state.xp += xpGain;
+  state.coins += coinGain;
+  state.lastTrained.velocidade = Date.now();
+  state.lastTrained.precisao = Date.now();
+  state.lastTrained.energia = Date.now();
+  saveState();
 
   // persiste best
   if(esquivaScore > (state.esquivaBest || 0)){
     state.esquivaBest = esquivaScore;
+    saveState();
   }
 
-  // usa o finishTraining padrão do projeto (mesmo XP * 2, modal de resultado, checagem de evolução)
-  finishTraining('screen-esquiva', 'velocidade', statGain, coinGain, title, sub);
+  // título
+  const title = esquivaDodged >= 60 ? 'Esquiva LENDÁRIA! ⚡'
+              : (esquivaDodged >= 25 ? 'Bons reflexos! 💨'
+              : (esquivaHits >= ESQUIVA_MAX_HITS ? 'Game Over — mas foi boa!' : 'Voltou cedo!'));
+  const sub = `Bolinhas desviadas: ${esquivaDodged}. Tempo: ${Math.floor(tElapsed)}s. +${vel} Vel, +${pre} Prec, +${ene} Ene, +${xpGain} XP.`;
+
+  // mostra o modal padrão mas no formato de 3 stats (esconde o single, mostra o multi)
+  document.getElementById('screen-esquiva').classList.remove('active');
+  document.getElementById('screen-home').classList.add('active');
+  renderHome();
+
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSub').textContent = sub;
+  document.getElementById('rewardMultiVel').textContent = '+' + vel;
+  document.getElementById('rewardMultiPrec').textContent = '+' + pre;
+  document.getElementById('rewardMultiEne').textContent = '+' + ene;
+  document.getElementById('rewardCoins').textContent = '+' + coinGain;
+  // toggle: esconde a caixinha de 1 stat, mostra a de 3 stats
+  document.getElementById('rewardStatSingle').style.display = 'none';
+  document.getElementById('rewardStatMulti').style.display = 'flex';
+  document.getElementById('resultModal').classList.add('active');
+
+  // checa evolução (mesma regra do finishTraining)
+  const newLevel = levelFromXp(state.xp);
+  if(newLevel >= 5 && !state.evolved){
+    state.evolved = true;
+    saveState();
+    pendingEvolution = true;
+  }
 }
