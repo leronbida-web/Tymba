@@ -241,6 +241,11 @@ function endMira(){
 let pendingEvolution = false;
 function closeResult(){
   document.getElementById('resultModal').classList.remove('active');
+  // reseta o modal pro formato padrão de 1 stat (caso o último treino tenha sido o Esquiva, que usa 3 stats)
+  const single = document.getElementById('rewardStatSingle');
+  const multi = document.getElementById('rewardStatMulti');
+  if(single) single.style.display = '';
+  if(multi) multi.style.display = 'none';
   if(pendingEvolution){
     pendingEvolution = false;
     showEvolution();
