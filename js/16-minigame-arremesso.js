@@ -38,7 +38,7 @@ const ARREMESSO_MAX_DRAG_PX = 130;      // arrastar essa distância pra trás = 
 const ARREMESSO_RESULT_PAUSE_MS = 950;  // pausa mostrando o resultado antes da próxima tentativa
 // ajuste fino: empurra o bichinho pra baixo (valor positivo) ou pra cima (negativo),
 // caso a arte dentro do svg tenha respiro embaixo e os "pés" não batam certinho no chão
-const ARREMESSO_PET_FOOT_OFFSET_PX = 55; // empurrado mais pra baixo (ajuste solicitado)
+const ARREMESSO_PET_FOOT_OFFSET_PX = 155; // empurrado mais pra baixo (ajuste solicitado)
 
 // teto de recompensa por sessão — rede de segurança, já que o muro sem teto
 // deve derrubar o jogador bem antes disso na prática
