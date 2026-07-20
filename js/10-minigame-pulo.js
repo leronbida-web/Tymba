@@ -109,7 +109,7 @@ function puloLoop(ts){
   puloDistSinceSpawn += puloSpeed*dt;
   if(puloDistSinceSpawn >= puloNextSpawnDist){
     puloDistSinceSpawn = 0;
-    puloNextSpawnDist = 420 + Math.random()*220; // distância maior entre uma pedra e a próxima
+    puloNextSpawnDist = 620 + Math.random()*220; // distância maior entre uma pedra e a próxima
     spawnPuloObstacle(w, 0);
     // às vezes nasce uma segunda pedra bem colada, formando um "aglomerado" como no dino game
     if(Math.random() < 0.25){
