@@ -36,6 +36,9 @@ const ARREMESSO_MAX_ANGLE = 90 * Math.PI / 180;
 const ARREMESSO_ANGLE_PERIOD_MS = 1300; // 1 ciclo completo (min→max→min) da seta
 const ARREMESSO_MAX_DRAG_PX = 130;      // arrastar essa distância pra trás = força máxima
 const ARREMESSO_RESULT_PAUSE_MS = 950;  // pausa mostrando o resultado antes da próxima tentativa
+// ajuste fino: empurra o bichinho pra baixo (valor positivo) ou pra cima (negativo),
+// caso a arte dentro do svg tenha respiro embaixo e os "pés" não batam certinho no chão
+const ARREMESSO_PET_FOOT_OFFSET_PX = 14;
 
 // teto de recompensa por sessão — rede de segurança, já que o muro sem teto
 // deve derrubar o jogador bem antes disso na prática
@@ -97,7 +100,7 @@ function startArremesso(){
 
   // posiciona o bichinho primeiro (aproximação inicial, mesma conta de antes)...
   arremessoPetEl.style.left = arremessoStoneRestX - w*0.05 + 'px';
-  arremessoPetEl.style.top = arremessoGroundY + arremessoCanvasTopOffset + 'px';
+  arremessoPetEl.style.top = arremessoGroundY + arremessoCanvasTopOffset + ARREMESSO_PET_FOOT_OFFSET_PX + 'px';
 
   // ...e então mede onde ele REALMENTE caiu na tela (depende do tamanho do
   // sprite renderizado, que não controlamos aqui), pra ancorar a pedra
