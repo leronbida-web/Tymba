@@ -11,11 +11,11 @@ function miraLevelForHits(hits){
 }
 
 const MIRA_RINGS = [
-  { frac:1.00, color:'#F4F4F4', points:10 },
-  { frac:0.83, color:'#333333', points:25 },
-  { frac:0.64, color:'#2AA7E8', points:50 },
-  { frac:0.46, color:'#F2762E', points:100 },
-  { frac:0.28, color:'#F5D949', points:250 },
+  { frac:1.00, color:'#F4F4F4', points:05 },
+  { frac:0.83, color:'#333333', points:15 },
+  { frac:0.64, color:'#2AA7E8', points:30 },
+  { frac:0.46, color:'#F2762E', points:50 },
+  { frac:0.28, color:'#F5D949', points:100 },
   { frac:0.12, color:'#141414', points:500 },
 ];
 
