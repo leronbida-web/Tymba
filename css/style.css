@@ -829,6 +829,42 @@
       0 0 32px rgba(168,207,224,0.55);
   }
   .cores-cell.tile .lbl{ display:none; }
+
+  /* fileira de referência no topo do jogo: mostra a sequência de cores das
+     peças (nível 1 → nível máximo) pro jogador saber o que vem depois de cada
+     fusão. Mesmas cores de .cores-cell.lvN acima, só que em bolinha pequena. */
+  .cores-color-guide{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:6px;
+    flex-wrap:wrap;
+    margin:0 0 8px;
+  }
+  .cores-color-guide .dot{
+    width:16px;
+    height:16px;
+    border-radius:50%;
+    flex-shrink:0;
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,0.18), 0 2px 4px rgba(0,0,0,0.22);
+  }
+  .cores-color-guide .dot.g1{ background:#EFE3D2; }
+  .cores-color-guide .dot.g2{ background:linear-gradient(135deg, #C7D08A, #9CAA5E); }
+  .cores-color-guide .dot.g3{ background:linear-gradient(135deg, #FFD8A0, #FFAE7A); }
+  .cores-color-guide .dot.g4{ background:linear-gradient(135deg, #FFAE7A, #E8794A); }
+  .cores-color-guide .dot.g5{ background:linear-gradient(135deg, #FF8E5A, #D9472A); }
+  .cores-color-guide .dot.g6{ background:linear-gradient(135deg, #BEE0FF, #6FB3F0); }
+  .cores-color-guide .dot.g7{ background:linear-gradient(135deg, #6FB3F0, #2E6BB8); }
+  .cores-color-guide .dot.g8{ background:linear-gradient(135deg, #4A90E2, #2E6BB8); }
+  .cores-color-guide .dot.g9{ background:linear-gradient(135deg, #D9EDF5, #A9CFE0); }
+  .cores-color-guide .dot.g10{ background:linear-gradient(135deg, #A9CFE0, #6BB3D4); }
+  .cores-color-guide .dot.g11{
+    background:linear-gradient(135deg, #FFFFFF, #D9EDF5);
+    box-shadow:
+      inset 0 -2px 0 rgba(0,0,0,0.12),
+      0 0 8px rgba(217,237,245,0.75),
+      0 0 14px rgba(168,207,224,0.55);
+  }
   @keyframes coresPop{
     0%{ transform:scale(0.4); }
     60%{ transform:scale(1.08); }

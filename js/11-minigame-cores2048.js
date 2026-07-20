@@ -210,9 +210,28 @@ function coresAttachSwipe(){
   el.addEventListener('pointerleave', ()=>{ active = false; });
 }
 
+// monta a fileira de bolinhas de referência (nível 1 → CORES_MAX_LEVEL) logo
+// acima do tabuleiro, mostrando ao jogador a sequência de cores que cada
+// fusão gera; guardamos por id pra não duplicar toda vez que o jogo reinicia
+function coresBuildColorGuide(){
+  if(document.getElementById('coresColorGuide')) return;
+  const board = document.getElementById('coresBoard');
+  if(!board || !board.parentNode) return;
+  const guide = document.createElement('div');
+  guide.id = 'coresColorGuide';
+  guide.className = 'cores-color-guide';
+  for(let lv=1; lv<=CORES_MAX_LEVEL; lv++){
+    const dot = document.createElement('span');
+    dot.className = 'dot g' + lv;
+    guide.appendChild(dot);
+  }
+  board.parentNode.insertBefore(guide, board);
+}
+
 function startCores(){
   hideAllScreens();
   document.getElementById('screen-cores').classList.add('active');
+  coresBuildColorGuide();
 
   coresBoard = coresEmptyBoard();
   coresScore = 0;
