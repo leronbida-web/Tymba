@@ -85,7 +85,7 @@ function startArremesso(){
   arremessoFlagTopY = arremessoGroundY - arremessoFlagPoleH;
 
   arremessoScore = 0;
-  arremessoVidas = 3;
+  arremessoVidas = 10;
   arremessoWallLevel = 1;
   arremessoActive = true;
   arremessoEnding = false;
