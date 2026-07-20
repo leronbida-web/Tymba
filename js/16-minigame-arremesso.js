@@ -38,7 +38,7 @@ const ARREMESSO_MAX_DRAG_PX = 130;      // arrastar essa distância pra trás = 
 const ARREMESSO_RESULT_PAUSE_MS = 950;  // pausa mostrando o resultado antes da próxima tentativa
 // ajuste fino: empurra o bichinho pra baixo (valor positivo) ou pra cima (negativo),
 // caso a arte dentro do svg tenha respiro embaixo e os "pés" não batam certinho no chão
-const ARREMESSO_PET_FOOT_OFFSET_PX = 30; // empurrado mais pra baixo (ajuste solicitado)
+const ARREMESSO_PET_FOOT_OFFSET_PX = 30; // valor que ficou bom visualmente; não afeta mais o ponto de saída da pedra (ver startArremesso)
 
 // teto de recompensa por sessão — rede de segurança, já que o muro sem teto
 // deve derrubar o jogador bem antes disso na prática
@@ -109,7 +109,10 @@ function startArremesso(){
   const arremessoCanvasRect = arremessoCanvas.getBoundingClientRect();
   const arremessoPetRect = arremessoPetEl.getBoundingClientRect();
   arremessoStoneRestX = (arremessoPetRect.left + arremessoPetRect.width * 0.5) - arremessoCanvasRect.left;
-  arremessoStoneRestY = (arremessoPetRect.top + arremessoPetRect.height * 0.38) - arremessoCanvasRect.top;
+  // subtrai o ARREMESSO_PET_FOOT_OFFSET_PX daqui: esse offset é só um ajuste
+  // visual de onde o sprite é desenhado, não deve mover o ponto de saída da
+  // pedra — sem isso, empurrar o bichinho pra baixo empurrava o arremesso junto.
+  arremessoStoneRestY = (arremessoPetRect.top + arremessoPetRect.height * 0.38) - arremessoCanvasRect.top - ARREMESSO_PET_FOOT_OFFSET_PX;
 
   arremessoCanvas.onpointerdown = handleArremessoPointerDown;
   arremessoCanvas.onpointermove = handleArremessoPointerMove;
