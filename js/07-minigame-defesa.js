@@ -18,7 +18,7 @@ function defesaScreenY(t, h, horizonY){ return horizonY + (h-horizonY) * defesaE
 function computeDefesaLevel(score){ return 1 + Math.floor(score/5); }
 
 function computeDefesaLevelParams(level){
-  const speedT = defesaBaseSpeedT + (level-1)*0.052;
+  const speedT = defesaBaseSpeedT + (level-1)*0.062;
   const spawnRate = Math.max(0.18, defesaBaseSpawn - (level-1)*0.085);
   return { speedT, spawnRate };
 }
