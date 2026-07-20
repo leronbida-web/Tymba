@@ -92,7 +92,7 @@ function puloLoop(ts){
   // própria velocidade vira o limite natural da corrida (fica impossível reagir a
   // tempo em algum momento), em vez de travar e deixar sessões longas e tranquilas
   // renderem energia sem fim
-  puloSpeed = PULO_BASE_SPEED + puloScore*0.8;
+  puloSpeed = PULO_BASE_SPEED + puloScore*0.5;
   puloScore += dt * (puloSpeed/9);
   puloGroundScrollX += puloSpeed*dt;
   document.getElementById('puloScoreLbl').textContent = Math.floor(puloScore);
