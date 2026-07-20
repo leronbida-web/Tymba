@@ -16,7 +16,7 @@
 let arremessoCtx, arremessoCanvas, arremessoActive = false;
 let arremessoRaf = null, arremessoLastTime = 0;
 let arremessoPhase = 'angle'; // 'angle' | 'power' | 'flight' | 'result'
-let arremessoScore = 0, arremessoVidas = 3, arremessoWallLevel = 1;
+let arremessoScore = 0, arremessoVidas = 10, arremessoWallLevel = 1;
 let arremessoAngle = 0, arremessoLockedAngle = 0, arremessoAngleStartTime = 0;
 let arremessoPower = 0, arremessoDragging = false, arremessoDragStartY = 0;
 let arremessoStone = null; // { x, y, vx, vy, wallChecked, hitWall }
