@@ -265,7 +265,7 @@
         <div class="title">Pulo</div>
         <div class="sub">Treina Energia</div>
       </button>
-      <button class="train-card" onclick="startForca()">
+      <button class="train-card" onclick="startArremesso()">
         <div class="icon">💪</div>
         <div class="title">Arremesso</div>
         <div class="sub">Treina Força</div>
@@ -385,41 +385,22 @@
     </div>
   </div>
 
-  <!-- FORÇA MINIGAME (Arremesso de Peso) -->
-  <div class="screen" id="screen-forca">
+  <!-- ARREMESSO DE PESO (treina Força) -->
+  <div class="screen" id="screen-arremesso">
     <div class="mira-wrap">
+      <button class="minigame-back-btn" onclick="arremessoBack()" aria-label="Voltar pra tela inicial">
+        ← <span>Voltar</span>
+      </button>
       <div class="mira-hud">
-        <div>💪 Força: <span id="forcaStatValue">0</span></div>
-        <div>🏆 Recorde: <span id="forcaBestValue">0</span></div>
-        <div>🧱 Muro: <span id="forcaLevelValue">1</span></div>
+        <div>💪 Pontos: <span id="arremessoScore">0</span></div>
+        <div>🧱 Muro: <span id="arremessoLevelLbl">1</span></div>
+        <div>💥 Vidas: <span id="arremessoVidas">3</span></div>
       </div>
 
-      <div class="forca-stage" id="forcaStage">
-        <!-- chão -->
-        <div class="forca-ground" id="forcaGround"></div>
-        <!-- muro (cresce em altura via JS) -->
-        <div class="forca-wall" id="forcaWall"></div>
-        <!-- Tymba (sprite do bichinho via blobSvg) -->
-        <div class="forca-tymba" id="forcaTymba"></div>
-        <!-- seta do ângulo (rotaciona via JS) -->
-        <div class="forca-arrow" id="forcaArrow"></div>
-        <!-- pedra arremessada -->
-        <div class="forca-stone" id="forcaStone" style="display:none;"></div>
-        <!-- barra de força (canto direito) -->
-        <div class="forca-force-wrap">
-          <div class="forca-force-bar" id="forcaForceBar">
-            <div class="forca-force-fill" id="forcaForceFill"></div>
-          </div>
-          <div class="forca-force-label" id="forcaForceLabel">—</div>
-        </div>
-        <!-- feedback de passe/falha -->
-        <div class="forca-feedback" id="forcaFeedback"></div>
-        <!-- texto da fase atual -->
-        <div class="forca-phase" id="forcaPhase">Toque pra travar o ÂNGULO</div>
-      </div>
-
-      <div class="forca-back-bar">
-        <button class="forca-back-btn" onclick="voltarDoForca()">Voltar e Salvar</button>
+      <div class="esquiva-stage" id="arremessoStage" style="position:relative; overflow:hidden;">
+        <canvas id="arremessoCanvas"></canvas>
+        <div id="arremessoPetSvg" style="position:absolute; width:70px; height:70px; transform:translate(-50%,-100%); pointer-events:none;"></div>
+        <div class="esquiva-hint" id="arremessoInstructions">Toque na tela quando o ângulo estiver bom, pra travar!</div>
       </div>
     </div>
   </div>
@@ -616,7 +597,7 @@
 <script src="js/13-duel-core.js?v=21"></script>
 <script src="js/14-duel-online.js?v=21"></script>
 <script src="js/15-dev-tools.js?v=21"></script>
-<script src="js/16-minigame-forca.js?v=21"></script>
+<script src="js/16-minigame-arremesso.js?v=22"></script>
 <script src="js/17-minigame-esquiva.js?v=21"></script>
 </body>
 </html>
