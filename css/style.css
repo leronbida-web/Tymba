@@ -830,6 +830,39 @@
   }
   .cores-cell.tile .lbl{ display:none; }
 
+  /* pad do minigame Sequência de Poderes (Simon Says elemental): grid 2x2
+     de botões com os símbolos dos 4 elementos */
+  .simon-pad{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:1fr 1fr;
+    gap:12px;
+    width:min(72vw, 320px);
+    aspect-ratio:1/1;
+    margin:0 auto;
+  }
+  .simon-btn{
+    border:none;
+    border-radius:20px;
+    font-size:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow:inset 0 -4px 0 rgba(0,0,0,0.18), 0 4px 10px rgba(0,0,0,0.22);
+    transition:filter .12s ease, transform .12s ease;
+    filter:brightness(0.75) saturate(0.7);
+  }
+  .simon-btn:active{ transform:scale(0.96); }
+  .simon-btn.lit{
+    filter:brightness(1.25) saturate(1.15);
+    box-shadow:inset 0 -4px 0 rgba(0,0,0,0.18), 0 0 22px rgba(255,255,255,0.55);
+  }
+  .simon-btn.simon-fogo{ background:linear-gradient(135deg, #FFAE7A, #E8794A); }
+  .simon-btn.simon-agua{ background:linear-gradient(135deg, #6FB3F0, #2E6BB8); }
+  .simon-btn.simon-ar{ background:linear-gradient(135deg, #D9EDF5, #A9CFE0); }
+  .simon-btn.simon-terra{ background:linear-gradient(135deg, #C7D08A, #9CAA5E); }
+
   /* fileira de referência no topo do jogo: mostra a sequência de cores das
      peças (nível 1 → nível máximo) pro jogador saber o que vem depois de cada
      fusão. Mesmas cores de .cores-cell.lvN acima, só que em bolinha pequena. */

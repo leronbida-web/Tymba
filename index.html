@@ -6,7 +6,7 @@
 <title>Bichinho Elemental</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=21">
+<link rel="stylesheet" href="css/style.css?v=25">
 </head>
 <body>
 <div id="app">
@@ -275,6 +275,11 @@
         <div class="title">Esquiva</div>
         <div class="sub">Treina Velocidade</div>
       </button>
+      <button class="train-card" onclick="startSimon()">
+        <div class="icon">🧠</div>
+        <div class="title">Sequência</div>
+        <div class="sub">Treina Inteligência</div>
+      </button>
     </div>
   </div>
 
@@ -438,6 +443,24 @@
     </div>
   </div>
 
+  <!-- SEQUÊNCIA DE PODERES (Simon Says elemental — treina Inteligência) -->
+  <div class="screen" id="screen-simon">
+    <div class="mira-wrap">
+      <button class="minigame-back-btn" onclick="simonBack()" aria-label="Voltar pra tela inicial">
+        ← <span>Voltar</span>
+      </button>
+      <div class="mira-hud">
+        <div>🧠 Pontos: <span id="simonScore">0</span></div>
+        <div>🚀 Nível: <span id="simonLevelLbl">1</span></div>
+      </div>
+
+      <svg id="simonPetSvg" class="mira-pet" viewBox="0 0 200 200"></svg>
+      <div class="simon-pad" id="simonPad"></div>
+      <div class="mira-instructions" id="simonInstructions">Observe a sequência...</div>
+    </div>
+  </div>
+
+
   <!-- DUELO -->
   <div class="screen" id="screen-duelo">
 
@@ -582,22 +605,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-<script src="js/01-core-state.js?v=21"></script>
-<script src="js/02-pet-interactions.js?v=21"></script>
-<script src="js/03-world.js?v=21"></script>
-<script src="js/04-render-core.js?v=21"></script>
-<script src="js/05-minigame-mira.js?v=21"></script>
-<script src="js/06-evolution-training.js?v=21"></script>
-<script src="js/07-minigame-defesa.js?v=21"></script>
-<script src="js/08-minigame-especial.js?v=21"></script>
-<script src="js/09-minigame-corrida.js?v=21"></script>
-<script src="js/10-minigame-pulo.js?v=21"></script>
-<script src="js/11-minigame-cores2048.js?v=21"></script>
-<script src="js/12-poderes-status.js?v=21"></script>
-<script src="js/13-duel-core.js?v=21"></script>
-<script src="js/14-duel-online.js?v=21"></script>
-<script src="js/15-dev-tools.js?v=21"></script>
-<script src="js/16-minigame-arremesso.js?v=24"></script>
-<script src="js/17-minigame-esquiva.js?v=21"></script>
+<script src="js/01-core-state.js?v=25"></script>
+<script src="js/02-pet-interactions.js?v=25"></script>
+<script src="js/03-world.js?v=25"></script>
+<script src="js/04-render-core.js?v=25"></script>
+<script src="js/05-minigame-mira.js?v=25"></script>
+<script src="js/06-evolution-training.js?v=25"></script>
+<script src="js/07-minigame-defesa.js?v=25"></script>
+<script src="js/08-minigame-especial.js?v=25"></script>
+<script src="js/09-minigame-corrida.js?v=25"></script>
+<script src="js/10-minigame-pulo.js?v=25"></script>
+<script src="js/11-minigame-cores2048.js?v=25"></script>
+<script src="js/12-poderes-status.js?v=25"></script>
+<script src="js/13-duel-core.js?v=25"></script>
+<script src="js/14-duel-online.js?v=25"></script>
+<script src="js/15-dev-tools.js?v=25"></script>
+<script src="js/16-minigame-arremesso.js?v=25"></script>
+<script src="js/17-minigame-esquiva.js?v=25"></script>
+<script src="js/18-minigame-simon.js?v=25"></script>
 </body>
 </html>
