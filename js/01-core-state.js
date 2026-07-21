@@ -3,6 +3,7 @@
 ========================================================= */
 const SAVE_KEY = 'bichinhoElementalSave';
 const MIN_STAT = 5;
+const STAT_MAX = 1000; // valor de stat que enche a barra 100% na tela de status (antes era 100)
 const DECAY_PER_DAY = 1.5;
 const ELEMENTS = {
   fogo:  { label:'Fogo',  color:'var(--fire)',  c1:'#FFAE7A', c2:'#E8794A', dark:'#C0562E', special:'Círculo de Fogo' },

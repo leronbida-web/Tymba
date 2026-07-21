@@ -217,7 +217,9 @@ function renderHome(){
   ['forca','velocidade','precisao','resistencia','inteligencia','energia','especial'].forEach(stat=>{
     const v = Math.round(state.stats[stat]);
     document.getElementById('val'+cap(stat)).textContent = v;
-    document.getElementById('bar'+cap(stat)).style.width = Math.min(100, v) + '%';
+    // barra agora enche em 1000 (antes era 100) — converte o valor da
+    // stat pra porcentagem real do teto novo, sem passar de 100%
+    document.getElementById('bar'+cap(stat)).style.width = Math.min(100, (v / STAT_MAX) * 100) + '%';
   });
   document.getElementById('especialLabel').textContent = ELEMENTS[state.element].special;
 
