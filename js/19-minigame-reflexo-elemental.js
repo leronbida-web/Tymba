@@ -57,6 +57,10 @@ function startReflexo(){
   const hud = wrap.querySelector('.mira-hud');
   const instr = wrap.querySelector('.mira-instructions');
   const backBtn = wrap.querySelector('.minigame-back-btn');
+  // frase tutorial curta, reaproveitando o mesmo elemento de instrução
+  // usado pelo minigame de mira — setamos o texto toda vez que o jogo
+  // inicia (a medição de altura logo abaixo já considera esse texto)
+  if(instr) instr.textContent = 'Aperte o símbolo certo quando ele entrar na faixa clara!';
   const reserved = (hud ? hud.offsetHeight : 0)
                   + (instr ? instr.offsetHeight : 0)
                   + (backBtn ? backBtn.offsetHeight : 0)
