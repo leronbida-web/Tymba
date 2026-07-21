@@ -222,10 +222,15 @@ function drawReflexoScene(w, h){
   ctx.lineWidth = 2;
   ctx.strokeRect(0, zoneTopY, w, zoneBotY - zoneTopY);
 
-  // símbolos caindo
+  // símbolos caindo — fillStyle e sombra próprios, sem herdar a
+  // transparência usada pra pintar a faixa da zona de acerto acima
+  // (era isso que deixava os símbolos quase invisíveis)
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = `${Math.round(laneW*0.42)}px sans-serif`;
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = 'rgba(0,0,0,0.85)';
+  ctx.shadowBlur = 6;
   reflexoSymbols.forEach(s => {
     if(s.hit) return; // já foi resolvido (pego ou perdido), não desenha mais
     const cx = laneW*s.lane + laneW/2;
@@ -233,6 +238,7 @@ function drawReflexoScene(w, h){
     const key = SIMON_KEYS[s.lane];
     ctx.fillText(SIMON_SYMBOL[key], cx, cy);
   });
+  ctx.shadowBlur = 0; // reseta pra não vazar sombra pra outros desenhos do próximo frame
 }
 
 function endReflexo(){
