@@ -863,20 +863,22 @@
   .simon-btn.simon-ar{ background:linear-gradient(135deg, #D9EDF5, #A9CFE0); }
   .simon-btn.simon-terra{ background:linear-gradient(135deg, #C7D08A, #9CAA5E); }
 
-  /* fileira de botões do minigame Combo Elemental — mesmo esquema de cor
+  /* fileira de botões do minigame Reflexo Elemental — mesmo esquema de cor
      dos botões do Simon, só que em linha (alinhados com as 4 pistas do
-     canvas acima) em vez de grid 2x2 */
-  .combo-btn-row{
+     canvas acima) em vez de grid 2x2. Altura fixa (não aspect-ratio) pra
+     não ficar alta demais em telas estreitas e empurrar o resto pra fora
+     da área visível. */
+  .reflexo-btn-row{
     display:flex;
     gap:8px;
     width:100%;
   }
-  .combo-btn{
+  .reflexo-btn{
     flex:1;
+    height:56px;
     border:none;
     border-radius:16px;
-    font-size:32px;
-    aspect-ratio:1/1;
+    font-size:28px;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -885,19 +887,19 @@
     transition:filter .12s ease, transform .08s ease;
     filter:brightness(0.8) saturate(0.75);
   }
-  .combo-btn:active{ transform:scale(0.94); }
-  .combo-btn.ok{
+  .reflexo-btn:active{ transform:scale(0.94); }
+  .reflexo-btn.ok{
     filter:brightness(1.3) saturate(1.2);
     box-shadow:inset 0 -4px 0 rgba(0,0,0,0.18), 0 0 18px rgba(255,255,255,0.6);
   }
-  .combo-btn.miss{
+  .reflexo-btn.miss{
     filter:brightness(0.55) saturate(0.4);
     box-shadow:inset 0 -4px 0 rgba(0,0,0,0.3), 0 0 14px rgba(220,60,60,0.6);
   }
-  .combo-btn.combo-fogo{ background:linear-gradient(135deg, #FFAE7A, #E8794A); }
-  .combo-btn.combo-agua{ background:linear-gradient(135deg, #6FB3F0, #2E6BB8); }
-  .combo-btn.combo-ar{ background:linear-gradient(135deg, #D9EDF5, #A9CFE0); }
-  .combo-btn.combo-terra{ background:linear-gradient(135deg, #C7D08A, #9CAA5E); }
+  .reflexo-btn.reflexo-fogo{ background:linear-gradient(135deg, #FFAE7A, #E8794A); }
+  .reflexo-btn.reflexo-agua{ background:linear-gradient(135deg, #6FB3F0, #2E6BB8); }
+  .reflexo-btn.reflexo-ar{ background:linear-gradient(135deg, #D9EDF5, #A9CFE0); }
+  .reflexo-btn.reflexo-terra{ background:linear-gradient(135deg, #C7D08A, #9CAA5E); }
 
   /* fileira de referência no topo do jogo: mostra a sequência de cores das
      peças (nível 1 → nível máximo) pro jogador saber o que vem depois de cada
