@@ -78,6 +78,7 @@ function closeDuelo(){
   document.getElementById('duelWallStaticSelf')?.remove();
   document.getElementById('duelWallStaticOpp')?.remove();
   document.getElementById('duelTimerLbl')?.remove();
+  document.getElementById('duelFuryBanner')?.remove();
   document.getElementById('screen-duelo').classList.remove('active');
   document.getElementById('screen-home').classList.add('active');
 }
@@ -216,14 +217,26 @@ function ensureDuelTimerEl(){
     style.id = 'duelTimerStyles';
     style.textContent = `
       #duelTimerLbl{
-        position:absolute; top:8px; left:50%; transform:translateX(-50%);
+        position:absolute; top:8px; right:8px;
         background:rgba(0,0,0,.55); color:#fff; font-weight:800; font-size:15px;
         padding:4px 14px; border-radius:14px; z-index:20; letter-spacing:.5px;
         font-variant-numeric: tabular-nums; pointer-events:none;
         transition: color .2s, background .2s;
       }
+      #duelTimerLbl.duel-timer-fury{ color:#fff; background:rgba(214,30,30,.8); }
       #duelTimerLbl.duel-timer-low{ color:#fff; background:rgba(160,10,10,.75); animation: duelTimerPulse 1s infinite; }
-      @keyframes duelTimerPulse{ 0%,100%{ transform:translateX(-50%) scale(1); } 50%{ transform:translateX(-50%) scale(1.08); } }
+      @keyframes duelTimerPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.08); } }
+
+      #duelFuryBanner{
+        position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(.85);
+        background:rgba(120,10,10,.92); color:#fff; font-weight:900; text-align:center;
+        padding:14px 20px; border-radius:16px; z-index:30; max-width:82%;
+        font-size:16px; line-height:1.3; letter-spacing:.3px; pointer-events:none;
+        white-space:pre-line;
+        box-shadow:0 0 0 3px rgba(255,90,31,.55), 0 8px 24px rgba(0,0,0,.4);
+        opacity:0; transition: opacity .25s ease, transform .25s ease;
+      }
+      #duelFuryBanner.show{ opacity:1; transform:translate(-50%,-50%) scale(1); }
     `;
     document.head.appendChild(style);
   }
@@ -247,7 +260,37 @@ function renderDuelTimer(){
   const mm = Math.floor(totalSec / 60);
   const ss = totalSec % 60;
   el.textContent = '⏱️ ' + mm + ':' + String(ss).padStart(2, '0');
+  el.classList.toggle('duel-timer-fury', isFuryActive());
   el.classList.toggle('duel-timer-low', totalSec <= 10);
+}
+
+/* Aviso grande no meio da arena quando o Modo Fúria liga, some sozinho depois de alguns segundos */
+function showFuryBanner(msg){
+  const arena = document.getElementById('duelArena');
+  if(!arena) return;
+  let el = document.getElementById('duelFuryBanner');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'duelFuryBanner';
+    arena.appendChild(el);
+  }
+  el.textContent = msg;
+  clearTimeout(el._hideTimeout);
+  requestAnimationFrame(()=> el.classList.add('show'));
+  el._hideTimeout = setTimeout(()=>{
+    el.classList.remove('show');
+    setTimeout(()=>{ el.remove(); }, 300);
+  }, 2600);
+}
+
+/* Chamado tanto no host/IA (a cada tick) quanto no convidado (no loop de UI) pra
+   disparar o aviso do Modo Fúria uma única vez, na hora certa pros dois lados */
+function checkFuryAnnounce(){
+  if(!duel || duel.furyAnnounced || !isFuryActive()) return;
+  duel.furyAnnounced = true;
+  logEvent('🔥 MODO FÚRIA! A energia dos dois passa a recarregar 2x mais rápido!');
+  flashArena();
+  showFuryBanner('🔥 Modo fúria ativado!\nO Tymba terá 2x mais energia!');
 }
 
 function renderPersistentWall(){
@@ -684,11 +727,7 @@ function combatTick(){
   if(!duel || !duel.active) return;
   const now = Date.now();
 
-  if(!duel.furyAnnounced && isFuryActive()){
-    duel.furyAnnounced = true;
-    logEvent('🔥 MODO FÚRIA! A energia dos dois passa a recarregar 2x mais rápido!');
-    flashArena();
-  }
+  checkFuryAnnounce();
 
   tickEnergy(duel.p1);
   tickEnergy(duel.p2);
@@ -726,6 +765,7 @@ function endDuelMatch(){
   document.getElementById('duelWallStaticSelf')?.remove();
   document.getElementById('duelWallStaticOpp')?.remove();
   document.getElementById('duelTimerLbl')?.remove();
+  document.getElementById('duelFuryBanner')?.remove();
   const me = meDuelist();
   const foe = foeDuelist();
   // Vale tanto pro nocaute quanto pro tempo esgotado: quem tem mais HP no fim vence
