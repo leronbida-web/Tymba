@@ -19,6 +19,8 @@ const ELEMENT_CYCLE = { fogo:'terra', terra:'ar', ar:'agua', agua:'fogo' };
 const FURY_START_MS = 60000;   // depois de 1 minuto de duelo, liga o Modo Fúria pros dois lados
 const FURY_ENERGY_MULT = 2;    // Modo Fúria: energia recarrega 2x mais rápido (igual Clash Royale)
 
+const DUEL_TIME_LIMIT_MS = 120000; // 2 minutos: quando o cronômetro zera, acaba o duelo e quem tiver mais HP vence
+
 /* Verdadeiro assim que o duelo atual passa da marca de 1 minuto (os dois lados calculam
    isso localmente em cima do mesmo duel.startedAt, então host, IA e convidado batem) */
 function isFuryActive(){
@@ -75,6 +77,7 @@ function closeDuelo(){
   duel = null;
   document.getElementById('duelWallStaticSelf')?.remove();
   document.getElementById('duelWallStaticOpp')?.remove();
+  document.getElementById('duelTimerLbl')?.remove();
   document.getElementById('screen-duelo').classList.remove('active');
   document.getElementById('screen-home').classList.add('active');
 }
@@ -142,6 +145,7 @@ function startAiDuel(opts){
     localSide: 'p1',
     mainInterval: null,
     startedAt: Date.now(),
+    endsAt: Date.now() + DUEL_TIME_LIMIT_MS,
     furyAnnounced: false,
     log: [],
     p1: newDuelist(state.name, state.element, p1Stats, p1Equipped),
@@ -199,7 +203,51 @@ function renderDuelArena(){
   document.getElementById('duelSelfSvg').style.backgroundImage = _hitAnimActive.self ? document.getElementById('duelSelfSvg').style.backgroundImage : "url('" + DUEL_SPRITES_BACK[self.element] + "')";
   document.getElementById('duelOppSvg').style.backgroundImage = _hitAnimActive.opp ? document.getElementById('duelOppSvg').style.backgroundImage : "url('" + DUEL_SPRITES_FRONT[opp.element] + "')";
   renderPersistentWall();
+  renderDuelTimer();
   renderLog();
+}
+
+/* ---------- Cronômetro regressivo (2 minutos) ---------- */
+function ensureDuelTimerEl(){
+  let el = document.getElementById('duelTimerLbl');
+  if(el) return el;
+  if(!document.getElementById('duelTimerStyles')){
+    const style = document.createElement('style');
+    style.id = 'duelTimerStyles';
+    style.textContent = `
+      #duelTimerLbl{
+        position:absolute; top:8px; left:50%; transform:translateX(-50%);
+        background:rgba(0,0,0,.55); color:#fff; font-weight:800; font-size:15px;
+        padding:4px 14px; border-radius:14px; z-index:20; letter-spacing:.5px;
+        font-variant-numeric: tabular-nums; pointer-events:none;
+        transition: color .2s, background .2s;
+      }
+      #duelTimerLbl.duel-timer-low{ color:#fff; background:rgba(160,10,10,.75); animation: duelTimerPulse 1s infinite; }
+      @keyframes duelTimerPulse{ 0%,100%{ transform:translateX(-50%) scale(1); } 50%{ transform:translateX(-50%) scale(1.08); } }
+    `;
+    document.head.appendChild(style);
+  }
+  const arena = document.getElementById('duelArena');
+  el = document.createElement('div');
+  el.id = 'duelTimerLbl';
+  if(arena){
+    const pos = getComputedStyle(arena).position;
+    if(pos === 'static') arena.style.position = 'relative';
+    arena.appendChild(el);
+  }
+  return el;
+}
+
+function renderDuelTimer(){
+  if(!duel || !duel.endsAt) return;
+  const el = ensureDuelTimerEl();
+  if(!el) return;
+  const msLeft = Math.max(0, duel.endsAt - Date.now());
+  const totalSec = Math.ceil(msLeft / 1000);
+  const mm = Math.floor(totalSec / 60);
+  const ss = totalSec % 60;
+  el.textContent = '⏱️ ' + mm + ':' + String(ss).padStart(2, '0');
+  el.classList.toggle('duel-timer-low', totalSec <= 10);
 }
 
 function renderPersistentWall(){
@@ -618,13 +666,16 @@ function aiActLive(){
 
 function checkMatchEnd(){
   if(!duel || !duel.active) return;
-  if(duel.p1.hp <= 0 || duel.p2.hp <= 0){
+  const timeUp = duel.endsAt && Date.now() >= duel.endsAt;
+  if(duel.p1.hp <= 0 || duel.p2.hp <= 0 || timeUp){
     duel.active = false;
+    // Só marca como "tempo esgotado" se ninguém já tinha caído por dano nesse mesmo instante
+    duel.endedByTimeout = !!(timeUp && duel.p1.hp > 0 && duel.p2.hp > 0);
     clearInterval(duel.mainInterval);
     if(duel.mode === 'online-host'){
-      sendOnline({ type:'end', p1hp: duel.p1.hp, p2hp: duel.p2.hp });
+      sendOnline({ type:'end', p1hp: duel.p1.hp, p2hp: duel.p2.hp, timeout: duel.endedByTimeout });
     }
-    setTimeout(()=> endDuelMatch(), 700);
+    setTimeout(()=> endDuelMatch(), duel.endedByTimeout ? 300 : 700);
   }
 }
 
@@ -674,29 +725,36 @@ function endDuelMatch(){
   document.getElementById('duelBattle').style.display = 'none';
   document.getElementById('duelWallStaticSelf')?.remove();
   document.getElementById('duelWallStaticOpp')?.remove();
+  document.getElementById('duelTimerLbl')?.remove();
   const me = meDuelist();
   const foe = foeDuelist();
-  const iWon = me.hp > 0 && foe.hp <= 0;
-  const iLost = foe.hp > 0 && me.hp <= 0;
+  // Vale tanto pro nocaute quanto pro tempo esgotado: quem tem mais HP no fim vence
+  const iWon = me.hp > foe.hp;
+  const iLost = foe.hp > me.hp;
   const isOnline = duel.mode === 'online-host' || duel.mode === 'online-guest';
+  const byTimeout = !!duel.endedByTimeout;
   const title = document.getElementById('duelResultTitle');
   const sub = document.getElementById('duelResultSub');
   const rewardRow = document.getElementById('duelResultRewardRow');
 
   if(iWon){
-    title.textContent = '🏆 Você venceu!';
-    sub.textContent = isOnline ? 'Seu bichinho venceu o duelo online!' : 'Seu bichinho dominou o duelo.';
+    title.textContent = byTimeout ? '🏆 Venceu no tempo!' : '🏆 Você venceu!';
+    sub.textContent = byTimeout
+      ? 'O tempo acabou e seu bichinho terminou com mais HP!'
+      : (isOnline ? 'Seu bichinho venceu o duelo online!' : 'Seu bichinho dominou o duelo.');
     const coinGain = duel.source === 'world' ? worldEnemyCoinReward(duel.worldLevel) : 15;
     state.coins += coinGain;
     document.getElementById('duelResultCoins').textContent = '+' + coinGain;
     rewardRow.style.display = 'flex';
   } else if(iLost){
-    title.textContent = '💀 Você perdeu';
-    sub.textContent = isOnline ? 'Seu amigo venceu essa. Bora treinar e revanche!' : 'O bichinho selvagem venceu essa. Treine mais e tente de novo.';
+    title.textContent = byTimeout ? '⏱️ Tempo esgotado' : '💀 Você perdeu';
+    sub.textContent = byTimeout
+      ? 'O tempo acabou e o adversário ficou com mais HP.'
+      : (isOnline ? 'Seu amigo venceu essa. Bora treinar e revanche!' : 'O bichinho selvagem venceu essa. Treine mais e tente de novo.');
     rewardRow.style.display = 'none';
   } else {
     title.textContent = 'Empate!';
-    sub.textContent = 'Os dois bichinhos caíram juntos.';
+    sub.textContent = byTimeout ? 'O tempo acabou com os dois no mesmo HP!' : 'Os dois bichinhos caíram juntos.';
     rewardRow.style.display = 'none';
   }
 

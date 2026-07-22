@@ -164,8 +164,9 @@ function handleOnlineData(msg){
         duel.active = false;
         duel.p1.hp = msg.p1hp;
         duel.p2.hp = msg.p2hp;
+        duel.endedByTimeout = !!msg.timeout;
         clearInterval(window._guestUiInterval);
-        setTimeout(()=> endDuelMatch(), 700);
+        setTimeout(()=> endDuelMatch(), msg.timeout ? 300 : 700);
       }
     } else if(msg.type === 'bye'){
       handleOnlineDisconnect();
@@ -201,6 +202,7 @@ function startOnlineDuelAsHost(guestHello){
     localSide: 'p1',
     mainInterval: null,
     startedAt: Date.now(),
+    endsAt: Date.now() + DUEL_TIME_LIMIT_MS,
     furyAnnounced: false,
     log: [],
     p1: newDuelist(state.name, state.element, p1Stats, p1Equipped),
@@ -208,7 +210,7 @@ function startOnlineDuelAsHost(guestHello){
   };
 
   showDuelBattleUI();
-  sendOnline({ type:'start', p1: serializeDuelist(duel.p1), p2: serializeDuelist(duel.p2), log: [], startedAt: duel.startedAt });
+  sendOnline({ type:'start', p1: serializeDuelist(duel.p1), p2: serializeDuelist(duel.p2), log: [], startedAt: duel.startedAt, endsAt: duel.endsAt });
   renderDuelArena();
   renderDuelCards();
   clearInterval(duel.mainInterval);
@@ -223,6 +225,7 @@ function startOnlineDuelAsGuest(startMsg){
     localSide: 'p2',
     mainInterval: null,
     startedAt: startMsg.startedAt || Date.now(),
+    endsAt: startMsg.endsAt || ((startMsg.startedAt || Date.now()) + DUEL_TIME_LIMIT_MS),
     log: startMsg.log || [],
     p1: deserializeDuelist(startMsg.p1),
     p2: deserializeDuelist(startMsg.p2),
@@ -231,7 +234,12 @@ function startOnlineDuelAsGuest(startMsg){
   renderDuelArena();
   renderDuelCards();
   clearInterval(window._guestUiInterval);
-  window._guestUiInterval = setInterval(()=>{ if(duel && duel.active) renderDuelCards(); }, 500);
+  window._guestUiInterval = setInterval(()=>{
+    if(duel && duel.active){
+      renderDuelCards();
+      renderDuelTimer();
+    }
+  }, 500);
 }
 
 /* Convidado: cada retrato que chega do anfitrião substitui o estado local */
