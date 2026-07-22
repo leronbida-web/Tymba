@@ -16,6 +16,15 @@ const BURN_TICK_MS = 1600;        // Círculo de Fogo: intervalo entre as 2 quei
 const TIRED_DURATION_MS = 3200;   // Fúria: tempo cansado com penalidade nos poderes
 const ELEMENT_CYCLE = { fogo:'terra', terra:'ar', ar:'agua', agua:'fogo' };
 
+const FURY_START_MS = 60000;   // depois de 1 minuto de duelo, liga o Modo Fúria pros dois lados
+const FURY_ENERGY_MULT = 2;    // Modo Fúria: energia recarrega 2x mais rápido (igual Clash Royale)
+
+/* Verdadeiro assim que o duelo atual passa da marca de 1 minuto (os dois lados calculam
+   isso localmente em cima do mesmo duel.startedAt, então host, IA e convidado batem) */
+function isFuryActive(){
+  return !!(duel && duel.startedAt && (Date.now() - duel.startedAt) >= FURY_START_MS);
+}
+
 /* +20% de dano para quem tem vantagem elemental (Fogo>Terra>Ar>Água>Fogo) */
 function elementAdvantage(atacante, defensor){
   return ELEMENT_CYCLE[atacante] === defensor ? 1.2 : 1.0;
@@ -33,7 +42,8 @@ function tickEnergy(p){
   const now = Date.now();
   const elapsed = (now - p.energyLastTick) / 1000;
   if(elapsed > 0){
-    p.energy = Math.min(ENERGY_MAX, p.energy + elapsed * ENERGY_REGEN_PER_SEC);
+    const mult = isFuryActive() ? FURY_ENERGY_MULT : 1;
+    p.energy = Math.min(ENERGY_MAX, p.energy + elapsed * ENERGY_REGEN_PER_SEC * mult);
     p.energyLastTick = now;
   }
   return p.energy;
@@ -131,6 +141,8 @@ function startAiDuel(opts){
     worldLevel: levelFromXp(state.xp),
     localSide: 'p1',
     mainInterval: null,
+    startedAt: Date.now(),
+    furyAnnounced: false,
     log: [],
     p1: newDuelist(state.name, state.element, p1Stats, p1Equipped),
     p2: newDuelist('Bichinho Selvagem', p2Element, p2Stats, p2Equipped),
@@ -174,6 +186,16 @@ function renderDuelArena(){
   setEnergyBar('duelSelfEnergyFill', isGuest ? self.energy : tickEnergy(self));
   if(!isGuest) tickEnergy(opp); // a energia do oponente segue existindo internamente, só não é exibida
   document.getElementById('duelOppNameTag').textContent = opp.name;
+  const roundLbl = document.getElementById('duelRoundLbl');
+  if(roundLbl){
+    if(isFuryActive()){
+      roundLbl.textContent = '🔥 MODO FÚRIA — energia 2x mais rápida!';
+      roundLbl.style.color = '#ff5a1f';
+    } else {
+      roundLbl.textContent = '⚔️ Ao vivo';
+      roundLbl.style.color = '';
+    }
+  }
   document.getElementById('duelSelfSvg').style.backgroundImage = _hitAnimActive.self ? document.getElementById('duelSelfSvg').style.backgroundImage : "url('" + DUEL_SPRITES_BACK[self.element] + "')";
   document.getElementById('duelOppSvg').style.backgroundImage = _hitAnimActive.opp ? document.getElementById('duelOppSvg').style.backgroundImage : "url('" + DUEL_SPRITES_FRONT[opp.element] + "')";
   renderPersistentWall();
@@ -610,6 +632,13 @@ function checkMatchEnd(){
 function combatTick(){
   if(!duel || !duel.active) return;
   const now = Date.now();
+
+  if(!duel.furyAnnounced && isFuryActive()){
+    duel.furyAnnounced = true;
+    logEvent('🔥 MODO FÚRIA! A energia dos dois passa a recarregar 2x mais rápido!');
+    flashArena();
+  }
+
   tickEnergy(duel.p1);
   tickEnergy(duel.p2);
 

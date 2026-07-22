@@ -200,13 +200,15 @@ function startOnlineDuelAsHost(guestHello){
     mode: 'online-host',
     localSide: 'p1',
     mainInterval: null,
+    startedAt: Date.now(),
+    furyAnnounced: false,
     log: [],
     p1: newDuelist(state.name, state.element, p1Stats, p1Equipped),
     p2: newDuelist(guestHello.name || 'Convidado', guestHello.element || randomElement(), guestHello.stats || state.stats, p2Equipped),
   };
 
   showDuelBattleUI();
-  sendOnline({ type:'start', p1: serializeDuelist(duel.p1), p2: serializeDuelist(duel.p2), log: [] });
+  sendOnline({ type:'start', p1: serializeDuelist(duel.p1), p2: serializeDuelist(duel.p2), log: [], startedAt: duel.startedAt });
   renderDuelArena();
   renderDuelCards();
   clearInterval(duel.mainInterval);
@@ -220,6 +222,7 @@ function startOnlineDuelAsGuest(startMsg){
     mode: 'online-guest',
     localSide: 'p2',
     mainInterval: null,
+    startedAt: startMsg.startedAt || Date.now(),
     log: startMsg.log || [],
     p1: deserializeDuelist(startMsg.p1),
     p2: deserializeDuelist(startMsg.p2),
