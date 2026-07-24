@@ -111,6 +111,7 @@ function setupOnlineConnHandlers(){
       name: state.name,
       element: state.element,
       stats: state.stats,
+      level: levelFromXp(state.xp),
       equipped: [...state.equippedPowers.livre, ...state.equippedPowers.especial],
     });
   });
@@ -177,7 +178,7 @@ function handleOnlineData(msg){
 /* Converte um duelista pra um objeto simples (Set não viaja em JSON) */
 function serializeDuelist(d){
   return {
-    name: d.name, element: d.element, stats: d.stats, hp: d.hp, maxHp: d.maxHp,
+    name: d.name, element: d.element, stats: d.stats, level: d.level, hp: d.hp, maxHp: d.maxHp,
     equipped: d.equipped, deck: d.deck, usedSpecialIds: [...d.usedSpecialIds],
     energy: d.energy, energyLastTick: d.energyLastTick, nextActionReadyAt: d.nextActionReadyAt,
     blockCharge: d.blockCharge, shieldPct: d.shieldPct, shieldExpiresAt: d.shieldExpiresAt,
@@ -205,8 +206,8 @@ function startOnlineDuelAsHost(guestHello){
     endsAt: Date.now() + DUEL_TIME_LIMIT_MS,
     furyAnnounced: false,
     log: [],
-    p1: newDuelist(state.name, state.element, p1Stats, p1Equipped),
-    p2: newDuelist(guestHello.name || 'Convidado', guestHello.element || randomElement(), guestHello.stats || state.stats, p2Equipped),
+    p1: newDuelist(state.name, state.element, p1Stats, p1Equipped, levelFromXp(state.xp)),
+    p2: newDuelist(guestHello.name || 'Convidado', guestHello.element || randomElement(), guestHello.stats || state.stats, p2Equipped, guestHello.level || 1),
   };
 
   showDuelBattleUI();

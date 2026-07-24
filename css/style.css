@@ -162,6 +162,11 @@
     animation: petBreath 3.2s ease-in-out infinite;
     filter: drop-shadow(0 6px 10px rgba(46,31,59,0.18));
   }
+  /* tamanho por estágio de evolução (0=base, 1/2/3=evoluções nos níveis 5/50/100) */
+  .pet-sprite.evo-0{ --sprite-w:205px; }
+  .pet-sprite.evo-1{ --sprite-w:260px; }
+  .pet-sprite.evo-2{ --sprite-w:305px; }
+  .pet-sprite.evo-3{ --sprite-w:350px; }
   /* pedestal oval atrás do bichinho, ancorado na base do sprite */
   .pet-pedestal{
     position:absolute;
@@ -395,12 +400,21 @@
     width:20%; max-width:150px; aspect-ratio:1/1; filter:drop-shadow(0 10px 14px rgba(0,0,0,0.35));
     background-size:contain; background-repeat:no-repeat; background-position:center;
   }
+  /* tamanho por estágio de evolução (0=base, 1/2/3=evoluções nos níveis 5/50/100) */
+  .duel-opp.evo-0{ width:16%; max-width:120px; }
+  .duel-opp.evo-1{ width:20%; max-width:150px; }
+  .duel-opp.evo-2{ width:24%; max-width:177px; }
+  .duel-opp.evo-3{ width:27%; max-width:203px; }
   .duel-opp-name{ display:none; }
   .duel-self{
     position:absolute; bottom:4%; left:50%; transform:translateX(-50%);
     width:40%; max-width:250px; aspect-ratio:1/1; filter:drop-shadow(0 14px 18px rgba(0,0,0,0.4));
     background-size:contain; background-repeat:no-repeat; background-position:center;
   }
+  .duel-self.evo-0{ width:32%; max-width:196px; }
+  .duel-self.evo-1{ width:40%; max-width:250px; }
+  .duel-self.evo-2{ width:47%; max-width:295px; }
+  .duel-self.evo-3{ width:54%; max-width:340px; }
   .duel-flash{
     position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none;
   }

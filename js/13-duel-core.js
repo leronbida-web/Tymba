@@ -21,6 +21,37 @@ const FURY_ENERGY_MULT = 2;    // Modo Fúria: energia recarrega 2x mais rápido
 
 const DUEL_TIME_LIMIT_MS = 120000; // 2 minutos: quando o cronômetro zera, acaba o duelo e quem tiver mais HP vence
 
+/* =========================================================
+   EVOLUÇÃO / TAMANHO DO TYMBA
+   -------------------------------------------------------
+   O Tymba nasce na forma base (pequeno) e evolui 3 vezes,
+   cada evolução deixando ele visivelmente maior na tela.
+   Isso é central pra funcionar igual no duelo, na home e no
+   mundo — quando plugarmos lá, é só chamar applyEvolutionSizeClass().
+   (Por enquanto as sprites continuam as mesmas por elemento;
+   as sprites diferentes por evolução ficam pra depois.)
+========================================================= */
+const EVOLUTION_LEVELS = [5, 50, 100]; // nível mínimo pra 1ª, 2ª e 3ª evolução (estágios 1, 2 e 3)
+
+/* Estágio atual (0 = forma base, 1/2/3 = evoluções) a partir do nível do Tymba */
+function getEvolutionStage(level){
+  level = level || 1;
+  let stage = 0;
+  for(let i = 0; i < EVOLUTION_LEVELS.length; i++){
+    if(level >= EVOLUTION_LEVELS[i]) stage = i + 1;
+  }
+  return stage;
+}
+
+/* Troca a classe evo-0..evo-3 num elemento de acordo com o nível informado.
+   As classes evo-* controlam o tamanho via CSS (ver style.css). */
+function applyEvolutionSizeClass(el, level){
+  if(!el) return;
+  const stage = getEvolutionStage(level);
+  el.classList.remove('evo-0', 'evo-1', 'evo-2', 'evo-3');
+  el.classList.add('evo-' + stage);
+}
+
 /* Verdadeiro assim que o duelo atual passa da marca de 1 minuto (os dois lados calculam
    isso localmente em cima do mesmo duel.startedAt, então host, IA e convidado batem) */
 function isFuryActive(){
@@ -106,9 +137,9 @@ function shuffleDeck(arr){
 function handOf(d){ return d.deck.slice(0, 4); }
 function nextCardOf(d){ return d.deck.length > 4 ? d.deck[4] : null; }
 
-function newDuelist(name, element, stats, equipped){
+function newDuelist(name, element, stats, equipped, level){
   return {
-    name, element, stats, hp: computeDuelHp(stats), maxHp: computeDuelHp(stats),
+    name, element, stats, level: level || 1, hp: computeDuelHp(stats), maxHp: computeDuelHp(stats),
     equipped, deck: shuffleDeck(equipped), usedSpecialIds: new Set(),
     energy: ENERGY_MAX, energyLastTick: Date.now(), nextActionReadyAt: 0,
     blockCharge: null,
@@ -149,8 +180,8 @@ function startAiDuel(opts){
     endsAt: Date.now() + DUEL_TIME_LIMIT_MS,
     furyAnnounced: false,
     log: [],
-    p1: newDuelist(state.name, state.element, p1Stats, p1Equipped),
-    p2: newDuelist('Bichinho Selvagem', p2Element, p2Stats, p2Equipped),
+    p1: newDuelist(state.name, state.element, p1Stats, p1Equipped, levelFromXp(state.xp)),
+    p2: newDuelist('Bichinho Selvagem', p2Element, p2Stats, p2Equipped, levelFromXp(state.xp)),
   };
   duel.p2.aiNextActionAt = Date.now() + 800;
 
@@ -203,6 +234,8 @@ function renderDuelArena(){
   }
   document.getElementById('duelSelfSvg').style.backgroundImage = _hitAnimActive.self ? document.getElementById('duelSelfSvg').style.backgroundImage : "url('" + DUEL_SPRITES_BACK[self.element] + "')";
   document.getElementById('duelOppSvg').style.backgroundImage = _hitAnimActive.opp ? document.getElementById('duelOppSvg').style.backgroundImage : "url('" + DUEL_SPRITES_FRONT[opp.element] + "')";
+  applyEvolutionSizeClass(document.getElementById('duelSelfSvg'), self.level);
+  applyEvolutionSizeClass(document.getElementById('duelOppSvg'), opp.level);
   renderPersistentWall();
   renderDuelTimer();
   renderLog();
