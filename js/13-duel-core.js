@@ -633,7 +633,7 @@ function castSpecialLive(caster, target, def, selfSide){
 // Pra adicionar um novo: DUEL_ATTACK_SPRITES.<chave_do_golpe>.<elemento> = 'url do gif'
 const DUEL_ATTACK_SPRITES = {
   forca: {
-    fogo: 'https://i.imgur.com/xCvh0Q3.gif',
+    fogo: 'https://imgur.com/bNxh225',
   },
 };
 
