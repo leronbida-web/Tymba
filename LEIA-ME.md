@@ -28,12 +28,18 @@ coleta recursos, crafta ferramentas e constrói.
    pasta local, escreve um resumo e clica **Commit to main → Push origin**.
 4. Espera 1-2 min e testa no link do GitHub Pages.
 
-⚠️ **Cache no celular**: o Chrome mobile costuma guardar `css/style.css` e
-os `js/*.js` em cache e não pega a versão nova sozinho. Por isso o
-`index.html` usa cache-busting (`?v=4` no final de cada `<script src>` e
-do `<link rel="stylesheet">`). **Toda vez que eu mudar um arquivo `.js` ou
-`.css` local, preciso bumpar esse número de versão no `index.html`**, ou o
-celular vai continuar mostrando a versão antiga mesmo depois do push.
+⚠️ **Cache no celular (e no PC também, às vezes)**: o Chrome costuma
+guardar `css/style.css` e os `js/*.js` em cache e não pega a versão nova
+sozinho. Por isso o `index.html` usa cache-busting: **todos** os
+`<script src="js/*.js?v=N">` e o `<link rel="stylesheet" href="css/style.css?v=N">`
+compartilham o mesmo número `N` (ex: hoje está em `?v=29`). **Toda vez que
+eu mudar qualquer arquivo `.js` ou `.css`, preciso bumpar esse `N` em
+TODOS os `<script>`/`<link>` do `index.html` de uma vez** (não só no
+arquivo que mudou), ou a versão antiga continua sendo servida mesmo
+depois do push — isso já causou confusão real numa sessão (testamos uma
+correção de CSS várias vezes achando que não tinha funcionado, quando na
+verdade o `?v=N` não tinha sido bumpado e o navegador nunca carregou o
+arquivo novo).
 
 ## Estrutura dos arquivos
 
@@ -90,8 +96,10 @@ do projeto inteiro a cada pedido, economizando tokens.
   Padrões ficam em `WORLD_AXE_PATTERN`, `WORLD_PICKAXE_PATTERN`,
   `WORLD_SWORD_PATTERN`, `WORLD_HOUSE_PATTERN` (`02-pet-interactions.js`).
 - **Espada**: clicar num bichinho selvagem com ela equipada mata na hora
-  (sem entrar em duelo), dá 100 moedas, o bichinho reaparece em outro
-  ponto do mapa.
+  (sem entrar em duelo), dá 10 moedas, o bichinho só some (sem duelo, sem
+  reaparecer em outro ponto — some igual quando é derrotado em duelo).
+- **Sprites de ataque nos duelos** (gifs no lugar da animação padrão):
+  ver seção própria mais abaixo, "Sprites de ataque (gifs)".
 - **Inventário** (🎒 no HUD do mundo): clique num item pra equipar
   ferramenta ou selecionar madeira/pedra pra construir — não crafta mais
   equipando automaticamente.
@@ -103,7 +111,49 @@ do projeto inteiro a cada pedido, economizando tokens.
 - **Blocos soltos no chão**: clicar devolve o recurso pro inventário; se
   não forem recolhidos até a noite chegar, somem sozinhos.
 
-## Pendências conhecidas (retomar quando der)
+## Sprites de ataque (gifs) nos duelos
+O golpe **Força** (nome de exibição "Investida", tecla `forca` em
+`POWER_DEFS`) por padrão dispara uma animação de 3 bolinhas coloridas
+(`spawnAtkBalls`, em `13-duel-core.js`). Dá pra trocar isso por um gif
+específico por golpe + elemento.
+
+**Como adicionar um gif novo:**
+1. Pegue o link **direto** da imagem no Imgur (não o link de álbum/galeria
+   tipo `imgur.com/a/XXXX` — tem que abrir a imagem sozinha, formato
+   `https://i.imgur.com/XXXXX.gif`).
+2. Em `13-duel-core.js`, ache a constante `DUEL_ATTACK_SPRITES` (perto de
+   `spawnAtkBalls`) e adicione/edite uma linha:
+   ```js
+   const DUEL_ATTACK_SPRITES = {
+     forca: {
+       fogo: 'https://i.imgur.com/xCvh0Q3.gif',
+       // agua: 'https://i.imgur.com/...',
+       // ar: 'https://i.imgur.com/...',
+       // terra: 'https://i.imgur.com/...',
+     },
+     // golpe_certeiro: { fogo: '...' }, — dá pra fazer o mesmo pra outros golpes
+   };
+   ```
+3. Não precisa mexer em mais nada — `spawnAttackFx()` já checa esse
+   catálogo primeiro e só cai pras bolinhas se não achar entrada pro
+   golpe+elemento. O gif percorre o mesmo trajeto/tempo que as bolinhas
+   (sai de quem atacou, vai até o adversário).
+4. **Não esqueça de bumpar o `?v=N` no `index.html`** depois (ver aviso de
+   cache lá em cima) — sem isso o teste não reflete a mudança.
+
+**Pegadinha do Imgur já resolvida** — se o gif aparecer certinho numa aba
+nova do navegador mas **um quadrado preto sólido** no lugar dele dentro do
+jogo: é o Imgur bloqueando o hotlink por causa do `Referer` que o
+navegador manda quando a imagem é carregada de dentro de outro site (o
+GitHub Pages do jogo). A correção já está aplicada em `spawnAtkSprite()`
+(`13-duel-core.js`): o `<img>` criado ali seta
+`img.referrerPolicy = 'no-referrer'`, o que resolve isso pra qualquer gif
+novo que passe por essa função — não precisa repetir esse ajuste.
+Se mesmo assim continuar preto, aí sim o link pode estar quebrado de
+verdade (testar abrindo o link puro numa aba anônima/PC diferente antes
+de mexer no código).
+
+
 - **Congelador (freeze), Voo, Muro de Terra**: mecânicas especiais que
   quebraram na transição de turnos pra tempo real — ainda precisam ser
   restauradas no sistema de duelo.
