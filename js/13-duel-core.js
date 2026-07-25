@@ -655,6 +655,7 @@ function spawnAtkSprite(fromSelf, url){
   const endTop = fromSelf ? 10 : (arenaH - 110);
   const img = document.createElement('img');
   img.src = url;
+  img.referrerPolicy = 'no-referrer'; // evita bloqueio de hotlink do Imgur baseado no referrer do site
   img.className = 'duel-atk-sprite';
   img.style.top = startTop + 'px';
   arena.appendChild(img);
