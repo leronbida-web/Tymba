@@ -634,7 +634,7 @@ function castSpecialLive(caster, target, def, selfSide){
 const DUEL_ATTACK_SPRITES = {
   forca: {
     fogo: 'https://i.imgur.com/bNxh225.gif',
-    agua: 'https://i.imgur.com/QNXld6b.gif',
+    agua: 'https://i.imgur.com/8TbSmFu.gif',
   },
 };
 
