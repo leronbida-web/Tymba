@@ -634,6 +634,7 @@ function castSpecialLive(caster, target, def, selfSide){
 const DUEL_ATTACK_SPRITES = {
   forca: {
     fogo: 'https://i.imgur.com/bNxh225.gif',
+    agua: 'https://i.imgur.com/QNXld6b.gif',
   },
 };
 
@@ -658,6 +659,10 @@ function spawnAtkSprite(fromSelf, url){
   img.referrerPolicy = 'no-referrer'; // evita bloqueio de hotlink do Imgur baseado no referrer do site
   img.className = 'duel-atk-sprite';
   img.style.top = startTop + 'px';
+  // O gif é desenhado pensando no golpe saindo de baixo pra cima (jogador).
+  // Quando é o adversário atacando (de cima pra baixo), espelha verticalmente
+  // pra não ficar com a mesma cara "de baixo pra cima" indo no sentido errado.
+  if(!fromSelf) img.style.transform = 'scaleY(-1)';
   arena.appendChild(img);
   requestAnimationFrame(()=> requestAnimationFrame(()=>{
     img.style.top = endTop + 'px';
