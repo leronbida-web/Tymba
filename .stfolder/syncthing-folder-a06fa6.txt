@@ -1,0 +1,5 @@
+# This directory is a Syncthing folder marker.
+# Do not delete.
+
+folderID: jaini-psucz
+created: 2026-07-25T16:24:55-03:00
