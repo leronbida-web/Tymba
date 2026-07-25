@@ -425,6 +425,13 @@
     box-shadow:0 0 14px rgba(0,0,0,0.35);
     transition: top .8s cubic-bezier(.32,.62,.4,1), opacity .25s ease .55s;
   }
+  /* gif de ataque (ex: Investida de fogo) — mesmo trajeto/tempo da bolinha, só que maior */
+  .duel-atk-sprite{
+    position:absolute; left:50%; width:56px; height:56px;
+    object-fit:contain; transform:translateX(-50%); z-index:6; pointer-events:none;
+    filter:drop-shadow(0 0 10px rgba(0,0,0,0.35));
+    transition: top .8s cubic-bezier(.32,.62,.4,1), opacity .25s ease .55s;
+  }
   .duel-shield-fx{
     position:absolute; left:50%; font-size:46px; z-index:7; pointer-events:none;
     transform:translate(-50%,-50%) scale(0.4); opacity:0;

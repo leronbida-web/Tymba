@@ -480,7 +480,7 @@ function applyOffensiveLive(attacker, defender, def, key, selfSide){
   }
   val *= elementAdvantage(attacker.element, defender.element);
 
-  if(key === 'forca') spawnAtkBalls(selfSide, attacker.element);
+  if(key === 'forca') spawnAttackFx(selfSide, attacker.element, key);
 
   applyHitToDefender(attacker, defender, val, selfSide, undefined, key === 'golpe_certeiro');
 
@@ -626,6 +626,43 @@ function castSpecialLive(caster, target, def, selfSide){
     spawnEmojiPop(!selfSide, '🧊');
     logEvent(`🧊 ${caster.name} congela ${target.name}, que não vai poder agir por 3s`);
   }
+}
+
+// Catálogo de gifs de ataque por golpe + elemento. Se não tiver entrada aqui pro
+// golpe/elemento, cai de volta pras bolinhas coloridas padrão (spawnAtkBalls).
+// Pra adicionar um novo: DUEL_ATTACK_SPRITES.<chave_do_golpe>.<elemento> = 'url do gif'
+const DUEL_ATTACK_SPRITES = {
+  forca: {
+    fogo: 'https://i.imgur.com/j6JbBYk.gif',
+  },
+};
+
+// decide se o golpe usa um gif dedicado ou a animação padrão de bolinhas
+function spawnAttackFx(fromSelf, elKey, moveKey){
+  const spriteUrl = DUEL_ATTACK_SPRITES[moveKey] && DUEL_ATTACK_SPRITES[moveKey][elKey];
+  if(spriteUrl){
+    spawnAtkSprite(fromSelf, spriteUrl);
+  } else {
+    spawnAtkBalls(fromSelf, elKey);
+  }
+}
+
+// gif do golpe saindo do Tymba que atacou e indo até o adversário (mesmo trajeto/tempo das bolinhas)
+function spawnAtkSprite(fromSelf, url){
+  const arena = document.getElementById('duelArena');
+  const arenaH = arena.clientHeight || 320;
+  const startTop = fromSelf ? (arenaH - 90) : 20;
+  const endTop = fromSelf ? 10 : (arenaH - 110);
+  const img = document.createElement('img');
+  img.src = url;
+  img.className = 'duel-atk-sprite';
+  img.style.top = startTop + 'px';
+  arena.appendChild(img);
+  requestAnimationFrame(()=> requestAnimationFrame(()=>{
+    img.style.top = endTop + 'px';
+    img.style.opacity = '0';
+  }));
+  setTimeout(()=> img.remove(), 950);
 }
 
 function spawnAtkBalls(fromSelf, elKey){
