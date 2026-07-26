@@ -636,6 +636,7 @@ const DUEL_ATTACK_SPRITES = {
     fogo: 'https://i.imgur.com/bNxh225.gif',
     agua: 'https://i.imgur.com/QNXld6b.gif',
     terra: 'https://i.imgur.com/HmFBX3N.png',
+    ar: 'https://i.imgur.com/GV73Bxo.gif'
   },
 };
 
