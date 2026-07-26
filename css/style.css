@@ -396,7 +396,7 @@
   }
   .duel-floor{ display:none; }
   .duel-opp{
-    position:absolute; top:6%; left:50%; transform:translateX(-50%);
+    position:absolute; top:12%; left:50%; transform:translateX(-50%);
     width:20%; max-width:150px; aspect-ratio:1/1; filter:drop-shadow(0 10px 14px rgba(0,0,0,0.35));
     background-size:contain; background-repeat:no-repeat; background-position:center;
   }
@@ -462,8 +462,8 @@
   }
   @keyframes duelDodgeSelf{
     0%{transform:translateX(-50%);}
-    30%{transform:translateX(calc(-50% - 40px));}
-    62%{transform:translateX(calc(-50% + 26px));}
+    30%{transform:translateX(calc(-50% - 80px));}
+    62%{transform:translateX(calc(-50% + 52px));}
     100%{transform:translateX(-50%);}
   }
   @keyframes duelDodgeOpp{
