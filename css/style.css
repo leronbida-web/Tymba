@@ -447,6 +447,9 @@
     transform:translate(-50%,-50%) scale(0.4); opacity:0;
     animation: shieldPop 1.1s ease forwards;
   }
+  .duel-shield-sprite.is-self{
+    width:128px; height:128px;
+  }
   @keyframes shieldPop{
     0%{opacity:0; transform:translate(-50%,-50%) scale(0.4);}
     30%{opacity:1; transform:translate(-50%,-50%) scale(1.18);}

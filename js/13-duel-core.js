@@ -640,7 +640,7 @@ const DUEL_OPP_ZONE_SHIFT = 0.06;
 // Pra adicionar um gif de escudo novo: DUEL_SHIELD_SPRITES.<elemento> = 'url do gif/imagem'
 // Se o elemento não tiver entrada aqui, cai no emote 🛡️ padrão (spawnEmojiPop).
 const DUEL_SHIELD_SPRITES = {
-  fogo: 'https://i.imgur.com/n0XBLTx.gif',
+  fogo: 'https://i.imgur.com/O39xqgr.gif',
 };
 
 // Pra adicionar um novo: DUEL_ATTACK_SPRITES.<chave_do_golpe>.<elemento> = 'url do gif'
@@ -730,7 +730,7 @@ function spawnShieldSprite(onSelf, url){
   const img = document.createElement('img');
   img.src = url;
   img.referrerPolicy = 'no-referrer'; // evita bloqueio de hotlink do Imgur baseado no referrer do site
-  img.className = 'duel-shield-sprite';
+  img.className = 'duel-shield-sprite' + (onSelf ? ' is-self' : '');
   img.style.top = (onSelf ? (arenaH - 130) : 90) + 'px';
   arena.appendChild(img);
   setTimeout(()=> img.remove(), 1150);
