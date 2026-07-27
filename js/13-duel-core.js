@@ -528,7 +528,7 @@ function applyHitToDefender(attacker, defender, rawVal, attackerSelfSide, label,
     } else {
       // Escudo: compara o valor do escudo com o valor do golpe recebido
       defender.blockCharge = null;
-      spawnShield(defenderOnSelf); // idem: junto com o golpe, não na ativação
+      spawnShield(defenderOnSelf, defender.element); // idem: junto com o golpe, não na ativação
       const shieldVal = block.value || 0;
       if(shieldVal >= dmg){
         logEvent(`🛡️ ${defender.name} bloqueou completamente o golpe de ${attacker.name} com o Escudo (${Math.round(shieldVal)} vs ${Math.round(dmg)})!`);
@@ -635,7 +635,13 @@ function castSpecialLive(caster, target, def, selfSide){
 // top:6% pra top:12% — a diferença (6% da altura da arena) é somada aqui pros
 // projéteis nascerem/pousarem no lugar certo. Se mudar o top do .duel-opp de
 // novo, atualiza esse valor pra (novo% - 0.06).
-const DUEL_OPP_ZONE_SHIFT = 0.18;
+const DUEL_OPP_ZONE_SHIFT = 0.06;
+
+// Pra adicionar um gif de escudo novo: DUEL_SHIELD_SPRITES.<elemento> = 'url do gif/imagem'
+// Se o elemento não tiver entrada aqui, cai no emote 🛡️ padrão (spawnEmojiPop).
+const DUEL_SHIELD_SPRITES = {
+  fogo: 'https://i.imgur.com/n0XBLTx.gif',
+};
 
 // Pra adicionar um novo: DUEL_ATTACK_SPRITES.<chave_do_golpe>.<elemento> = 'url do gif'
 const DUEL_ATTACK_SPRITES = {
@@ -643,7 +649,6 @@ const DUEL_ATTACK_SPRITES = {
     fogo: 'https://i.imgur.com/bNxh225.gif',
     agua: 'https://i.imgur.com/QNXld6b.gif',
     terra: 'https://i.imgur.com/HmFBX3N.png',
-    ar: 'https://i.imgur.com/GV73Bxo.gif',
   },
 };
 
@@ -714,7 +719,22 @@ function spawnEmojiPop(onSelf, emoji){
   arena.appendChild(s);
   setTimeout(()=> s.remove(), 1150);
 }
-function spawnShield(onSelf){ spawnEmojiPop(onSelf, '🛡️'); }
+function spawnShield(onSelf, elKey){
+  const url = DUEL_SHIELD_SPRITES[elKey];
+  if(url) spawnShieldSprite(onSelf, url);
+  else spawnEmojiPop(onSelf, '🛡️');
+}
+function spawnShieldSprite(onSelf, url){
+  const arena = document.getElementById('duelArena');
+  const arenaH = arena.clientHeight || 320;
+  const img = document.createElement('img');
+  img.src = url;
+  img.referrerPolicy = 'no-referrer'; // evita bloqueio de hotlink do Imgur baseado no referrer do site
+  img.className = 'duel-shield-sprite';
+  img.style.top = (onSelf ? (arenaH - 130) : 90) + 'px';
+  arena.appendChild(img);
+  setTimeout(()=> img.remove(), 1150);
+}
 
 function spawnWall(){
   const arena = document.getElementById('duelArena');
