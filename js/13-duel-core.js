@@ -630,13 +630,19 @@ function castSpecialLive(caster, target, def, selfSide){
 
 // Catálogo de gifs de ataque por golpe + elemento. Se não tiver entrada aqui pro
 // golpe/elemento, cai de volta pras bolinhas coloridas padrão (spawnAtkBalls).
+// Ajuste dos pontos de saída/chegada dos efeitos de ataque quando a posição do
+// adversário na tela (.duel-opp, no CSS) muda. Hoje o adversário desceu de
+// top:6% pra top:12% — a diferença (6% da altura da arena) é somada aqui pros
+// projéteis nascerem/pousarem no lugar certo. Se mudar o top do .duel-opp de
+// novo, atualiza esse valor pra (novo% - 0.06).
+const DUEL_OPP_ZONE_SHIFT = 0.06;
+
 // Pra adicionar um novo: DUEL_ATTACK_SPRITES.<chave_do_golpe>.<elemento> = 'url do gif'
 const DUEL_ATTACK_SPRITES = {
   forca: {
     fogo: 'https://i.imgur.com/bNxh225.gif',
     agua: 'https://i.imgur.com/QNXld6b.gif',
     terra: 'https://i.imgur.com/HmFBX3N.png',
-    ar: 'https://i.imgur.com/GV73Bxo.gif'
   },
 };
 
@@ -654,8 +660,8 @@ function spawnAttackFx(fromSelf, elKey, moveKey){
 function spawnAtkSprite(fromSelf, url){
   const arena = document.getElementById('duelArena');
   const arenaH = arena.clientHeight || 320;
-  const startTop = fromSelf ? (arenaH - 90) : 20;
-  const endTop = fromSelf ? 10 : (arenaH - 110);
+  const startTop = fromSelf ? (arenaH - 90) : (20 + arenaH * DUEL_OPP_ZONE_SHIFT);
+  const endTop = fromSelf ? (10 + arenaH * DUEL_OPP_ZONE_SHIFT) : (arenaH - 110);
   const img = document.createElement('img');
   img.src = url;
   img.referrerPolicy = 'no-referrer'; // evita bloqueio de hotlink do Imgur baseado no referrer do site
@@ -677,8 +683,8 @@ function spawnAtkBalls(fromSelf, elKey){
   const el = ELEMENTS[elKey];
   const arena = document.getElementById('duelArena');
   const arenaH = arena.clientHeight || 320;
-  const startTop = fromSelf ? (arenaH - 90) : 20;
-  const endTop = fromSelf ? 10 : (arenaH - 110);
+  const startTop = fromSelf ? (arenaH - 90) : (20 + arenaH * DUEL_OPP_ZONE_SHIFT);
+  const endTop = fromSelf ? (10 + arenaH * DUEL_OPP_ZONE_SHIFT) : (arenaH - 110);
   const color = `radial-gradient(circle at 35% 30%, ${el.c1}, ${el.c2})`;
   [0, 1, 2].forEach(i=>{
     setTimeout(()=>{
