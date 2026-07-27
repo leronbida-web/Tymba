@@ -635,7 +635,7 @@ function castSpecialLive(caster, target, def, selfSide){
 // top:6% pra top:12% — a diferença (6% da altura da arena) é somada aqui pros
 // projéteis nascerem/pousarem no lugar certo. Se mudar o top do .duel-opp de
 // novo, atualiza esse valor pra (novo% - 0.06).
-const DUEL_OPP_ZONE_SHIFT = 0.06;
+const DUEL_OPP_ZONE_SHIFT = 0.12;
 
 // Pra adicionar um novo: DUEL_ATTACK_SPRITES.<chave_do_golpe>.<elemento> = 'url do gif'
 const DUEL_ATTACK_SPRITES = {
