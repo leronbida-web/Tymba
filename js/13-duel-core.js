@@ -640,7 +640,10 @@ const DUEL_OPP_ZONE_SHIFT = 0.06;
 // Pra adicionar um gif de escudo novo: DUEL_SHIELD_SPRITES.<elemento> = 'url do gif/imagem'
 // Se o elemento não tiver entrada aqui, cai no emote 🛡️ padrão (spawnEmojiPop).
 const DUEL_SHIELD_SPRITES = {
-  fogo: 'https://i.imgur.com/YNopies.gif',
+  fogo: 'https://i.imgur.com/O39xqgr.gif',
+  terra: 'https://i.imgur.com/rF4JEfl.gif',
+  agua: 'https://i.imgur.com/CMNRRTd.gif',
+  ar: 'https://i.imgur.com/cnjbGeB.gif',
 };
 
 // Pra adicionar um novo: DUEL_ATTACK_SPRITES.<chave_do_golpe>.<elemento> = 'url do gif'
