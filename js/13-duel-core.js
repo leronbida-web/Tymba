@@ -652,6 +652,7 @@ const DUEL_ATTACK_SPRITES = {
     fogo: 'https://i.imgur.com/bNxh225.gif',
     agua: 'https://i.imgur.com/QNXld6b.gif',
     terra: 'https://i.imgur.com/HmFBX3N.png',
+    ar: 'https://i.imgur.com/GV73Bxo.gif',
   },
 };
 
@@ -685,7 +686,7 @@ function spawnAtkSprite(fromSelf, url){
     img.style.top = endTop + 'px';
     img.style.opacity = '0';
   }));
-  setTimeout(()=> img.remove(), 950);
+  setTimeout(()=> img.remove(), 1350);
 }
 
 function spawnAtkBalls(fromSelf, elKey){
@@ -707,8 +708,8 @@ function spawnAtkBalls(fromSelf, elKey){
         ball.style.top = endTop + 'px';
         ball.style.opacity = '0';
       }));
-      setTimeout(()=> ball.remove(), 950);
-    }, i * 160);
+      setTimeout(()=> ball.remove(), 1350);
+    }, i * 220);
   });
 }
 
