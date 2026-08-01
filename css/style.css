@@ -1351,7 +1351,9 @@
     z-index:1000;
     transition:none;
   }
-  /* bandeja (peças fora do tabuleiro) */
+  /* bandeja (peças fora do tabuleiro). O JS controla o tamanho real de cada peça
+     via inline style (width/height em pixels baseado no tamanho da peça). Aqui
+     só organizamos o layout flexbox. */
   .puzzle-tray{
     width:min(360px, 92vw);
     min-height:74px;
@@ -1361,16 +1363,12 @@
     padding:8px;
     display:flex;
     flex-wrap:wrap;
-    gap:6px;
+    gap:5px;
     justify-content:center;
     align-items:flex-start;
     box-sizing:border-box;
-  }
-  /* a peça na bandeja mantém o tamanho natural (1x1 da grade) — o JS seta
-     width/height via gridColumn/gridRow só quando ela está no tabuleiro */
-  .puzzle-tray .puzzle-piece{
-    width:32px; height:32px;
-    flex:0 0 auto;
+    touch-action:none;
+    user-select:none;
   }
   /* layer invisível que segura a peça durante o drag — fica fixed pra ela flutuar livre */
   .puzzle-drag-layer{
