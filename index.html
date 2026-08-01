@@ -6,7 +6,7 @@
 <title>Bichinho Elemental</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=29">
+<link rel="stylesheet" href="css/style.css?v=30">
 </head>
 <body>
 <div id="app">
@@ -283,6 +283,11 @@
         <div class="title">Reflexo</div>
         <div class="sub">Precisão</div>
       </button>
+      <button class="train-card" onclick="startPuzzle()">
+        <div class="icon">🧩</div>
+        <div class="title">Quebra-cabeça</div>
+        <div class="sub">Inteligência</div>
+      </button>
     </div>
   </div>
 
@@ -482,6 +487,29 @@
   </div>
 
 
+  <!-- QUEBRA-CABEÇA (treina Inteligência) -->
+  <div class="screen" id="screen-puzzle">
+    <div class="mira-wrap">
+      <button class="minigame-back-btn" onclick="puzzleBack()" aria-label="Voltar pra tela inicial">
+        ← <span>Voltar</span>
+      </button>
+      <div class="mira-hud">
+        <div>🧩 Fase: <span id="puzzlePhase">1</span></div>
+        <div>⭐ Melhor: <span id="puzzleBest">0</span></div>
+        <div id="puzzleNextReward">+1 🧠</div>
+      </div>
+      <div class="puzzle-frame">
+        <div class="puzzle-board" id="puzzleBoard" aria-label="Tabuleiro do quebra-cabeça"></div>
+        <div class="puzzle-tray" id="puzzleTray" aria-label="Peças disponíveis"></div>
+      </div>
+      <div class="puzzle-drag-layer" id="puzzleDragLayer"></div>
+      <div class="mira-instructions">
+        Arraste as peças da bandeja para o tabuleiro. <b>Toque duas vezes</b> numa peça da bandeja pra girar. 2-3 peças já vêm no lugar como dica.
+      </div>
+    </div>
+  </div>
+
+
   <!-- DUELO -->
   <div class="screen" id="screen-duelo">
 
@@ -626,24 +654,25 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-<script src="js/01-core-state.js?v=29"></script>
-<script src="js/02-pet-interactions.js?v=29"></script>
-<script src="js/03-world.js?v=29"></script>
-<script src="js/04-render-core.js?v=29"></script>
-<script src="js/05-minigame-mira.js?v=29"></script>
-<script src="js/06-evolution-training.js?v=29"></script>
-<script src="js/07-minigame-defesa.js?v=29"></script>
-<script src="js/08-minigame-especial.js?v=29"></script>
-<script src="js/09-minigame-corrida.js?v=29"></script>
-<script src="js/10-minigame-pulo.js?v=29"></script>
-<script src="js/11-minigame-cores2048.js?v=29"></script>
-<script src="js/12-poderes-status.js?v=29"></script>
+<script src="js/01-core-state.js?v=30"></script>
+<script src="js/02-pet-interactions.js?v=30"></script>
+<script src="js/03-world.js?v=30"></script>
+<script src="js/04-render-core.js?v=30"></script>
+<script src="js/05-minigame-mira.js?v=30"></script>
+<script src="js/06-evolution-training.js?v=30"></script>
+<script src="js/07-minigame-defesa.js?v=30"></script>
+<script src="js/08-minigame-especial.js?v=30"></script>
+<script src="js/09-minigame-corrida.js?v=30"></script>
+<script src="js/10-minigame-pulo.js?v=30"></script>
+<script src="js/11-minigame-cores2048.js?v=30"></script>
+<script src="js/12-poderes-status.js?v=30"></script>
 <script src="js/13-duel-core.js?v=39"></script>
-<script src="js/14-duel-online.js?v=29"></script>
-<script src="js/15-dev-tools.js?v=29"></script>
-<script src="js/16-minigame-arremesso.js?v=29"></script>
-<script src="js/17-minigame-esquiva.js?v=29"></script>
-<script src="js/18-minigame-simon.js?v=29"></script>
-<script src="js/19-minigame-reflexo-elemental.js?v=29"></script>
+<script src="js/14-duel-online.js?v=30"></script>
+<script src="js/15-dev-tools.js?v=30"></script>
+<script src="js/16-minigame-arremesso.js?v=30"></script>
+<script src="js/17-minigame-esquiva.js?v=30"></script>
+<script src="js/18-minigame-simon.js?v=30"></script>
+<script src="js/19-minigame-reflexo-elemental.js?v=30"></script>
+<script src="js/20-minigame-quebracabeca.js?v=30"></script>
 </body>
 </html>

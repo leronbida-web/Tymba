@@ -1298,3 +1298,81 @@
     transition:transform .08s ease, background .08s ease;
   }
   .world-shoot-btn:active{ transform:scale(0.9); background:rgba(192,32,26,0.55); }
+
+  /* ---------- Minigame: Quebra-cabeça (treina Inteligência) ---------- */
+  #screen-puzzle{
+    padding:0;
+    background:linear-gradient(180deg, #2E1F3B 0%, #1B1230 100%);
+  }
+  #screen-puzzle .mira-hud{ background:transparent; }
+  .puzzle-frame{
+    width:min(360px, 92vw);
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    margin:8px auto 0;
+  }
+  /* tabuleiro 8x8 — moldura cinza escuro estilo imagem 1 */
+  .puzzle-board{
+    width:min(360px, 92vw);
+    aspect-ratio:1/1;
+    background:#3A2D4D;
+    border:6px solid #2A1F38;
+    border-radius:14px;
+    padding:6px;
+    display:grid;
+    grid-template-columns:repeat(8, 1fr);
+    grid-template-rows:repeat(8, 1fr);
+    gap:2px;
+    box-shadow:0 8px 18px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.06);
+    touch-action:none;
+    user-select:none;
+  }
+  .puzzle-cell{
+    background:rgba(255,255,255,0.06);
+    border-radius:3px;
+  }
+  /* peça genérica — visual chapado, borda arredondada, cor vem inline do JS */
+  .puzzle-piece{
+    border-radius:5px;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,0.18), 0 1px 2px rgba(0,0,0,0.3);
+    transition:transform .12s ease, box-shadow .12s ease;
+    touch-action:none;
+    user-select:none;
+    cursor:grab;
+    position:relative;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .puzzle-piece.fixed{
+    cursor:default;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,0.3), 0 0 0 2px rgba(255,214,92,0.5);
+  }
+  .puzzle-piece.dragging{
+    transform:scale(1.06);
+    box-shadow:0 8px 18px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(0,0,0,0.2);
+    z-index:1000;
+    transition:none;
+  }
+  /* bandeja (peças fora do tabuleiro) */
+  .puzzle-tray{
+    width:min(360px, 92vw);
+    min-height:74px;
+    background:rgba(255,255,255,0.08);
+    border:2px dashed rgba(255,255,255,0.2);
+    border-radius:12px;
+    padding:8px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    justify-content:center;
+    align-items:flex-start;
+    box-sizing:border-box;
+  }
+  /* a peça na bandeja mantém o tamanho natural (1x1 da grade) — o JS seta
+     width/height via gridColumn/gridRow só quando ela está no tabuleiro */
+  .puzzle-tray .puzzle-piece{
+    width:32px; height:32px;
+    flex:0 0 auto;
+  }
+  /* layer invisível que segura a peça durante o drag — fica fixed pra ela flutuar livre */
+  .puzzle-drag-layer{
+    position:fixed; inset:0; pointer-events:none; z-index:999;
+  }
