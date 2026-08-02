@@ -235,12 +235,21 @@ function puzzleRepositionPiece(piece){
 }
 
 // ---------------- EVENTOS DAS PEÇAS ----------------
+// Estratégia de drag:
+// 1) A peça GANHA `position: fixed` mas PERMANECE no mesmo parent (bandeja ou tabuleiro).
+//    Assim, ela "flutua" sobre a tela mas continua no DOM tree, e os event listeners
+//    dela continuam disparando normalmente.
+// 2) `setPointerCapture` garante que TODOS os pointermove/pointerup vão pra ela
+//    enquanto o usuário tá arrastando, mesmo se o dedo sair da área visual da peça.
+// 3) Ao soltar, removemos `position: fixed` e re-anexamos no parent correto
+//    (bandeja ou tabuleiro) conforme a posição onde foi solto.
 function puzzleAttachPieceEvents(piece){
   const el = piece.el;
   el.addEventListener('pointerdown', (e) => {
     if(puzzleSolved) return;
     if(piece.fixed) return;
     e.preventDefault();
+    e.stopPropagation();
     try { el.setPointerCapture(e.pointerId); } catch(_) {}
     puzzleBeginDrag(piece, e);
   });
@@ -250,7 +259,7 @@ function puzzleAttachPieceEvents(piece){
   });
   el.addEventListener('pointerup', (e) => {
     if(!puzzleDrag || puzzleDrag.piece !== piece) return;
-    try { el.releasePointerCapture(puzzleDrag.pointerId); } catch(_) {}
+    try { el.releasePointerCapture(e.pointerId); } catch(_) {}
     puzzleEndDrag(e);
   });
   el.addEventListener('pointercancel', () => {
@@ -275,24 +284,23 @@ function puzzleBeginDrag(piece, e){
     puzzleLastTap[piece.def.id] = now;
   }
 
-  // ---- tira a peça do tabuleiro/bandeja e joga no drag layer (pra ela flutuar)
-  const layer = document.getElementById('puzzleDragLayer');
-  if(!layer) return;
+  // ---- guarda a posição visual atual ANTES de mudar nada
   const el = piece.el;
   const r = el.getBoundingClientRect();
-  // tamanho visual atual da peça no DOM (já tá correto: 32 ou cellPx)
   const dragW = r.width;
   const dragH = r.height;
-  el.style.position = 'fixed';
-  el.style.left = r.left + 'px';
-  el.style.top  = r.top  + 'px';
-  el.style.width  = dragW + 'px';
-  el.style.height = dragH + 'px';
+
+  // tira do grid (caso estivesse no tabuleiro) pra ela poder usar left/top absolutos
   el.style.gridColumn = '';
   el.style.gridRow = '';
+  el.style.position = 'fixed';
+  el.style.left   = r.left + 'px';
+  el.style.top    = r.top  + 'px';
+  el.style.width  = dragW + 'px';
+  el.style.height = dragH + 'px';
   el.style.zIndex = '1000';
+  el.style.margin = '0';
   el.classList.add('dragging');
-  layer.appendChild(el);
 
   puzzleDrag = {
     piece,
@@ -302,6 +310,8 @@ function puzzleBeginDrag(piece, e){
     inTrayAtStart: piece.inTray,
     originalGx: piece.gx,
     originalGy: piece.gy,
+    startLeft: r.left,
+    startTop:  r.top,
   };
   // durante o drag, a peça não tem lugar fixo
   piece.inTray = false;
@@ -325,55 +335,55 @@ function puzzleEndDrag(e){
   const cy = r.top  + r.height/2;
 
   const board = document.getElementById('puzzleBoard');
-  const tray = document.getElementById('puzzleTray');
+  const tray  = document.getElementById('puzzleTray');
   const boardR = board.getBoundingClientRect();
-  const trayR = tray.getBoundingClientRect();
+  const trayR  = tray.getBoundingClientRect();
 
   const droppedOnBoard = (cx >= boardR.left && cx <= boardR.right && cy >= boardR.top && cy <= boardR.bottom);
   const droppedOnTray  = (cx >= trayR.left  && cx <= trayR.right  && cy >= trayR.top  && cy <= trayR.bottom);
 
-  // tira do drag layer e limpa estilos
-  const layer = document.getElementById('puzzleDragLayer');
-  if(layer && el.parentNode === layer) layer.removeChild(el);
+  // tira a classe e os estilos de drag (mantém no mesmo parent, vai só reposicionar)
   el.classList.remove('dragging');
   el.style.position = '';
   el.style.left = '';
   el.style.top = '';
   el.style.zIndex = '';
-  // (width/height vão ser re-aplicados em puzzleRepositionPiece)
+  el.style.margin = '';
+  // (width/height/grid vão ser re-aplicados em puzzleRepositionPiece)
 
   if(droppedOnBoard){
-    // converte posição do centro da peça pra célula do tabuleiro
+    // re-anexa no board e calcula a célula
+    if(el.parentNode !== board) board.appendChild(el);
     const localX = cx - boardR.left;
     const localY = cy - boardR.top;
     const { w, h } = puzzleCurrentDims(piece);
-    // alinha o centro da peça ao centro do span de células
     const gx = Math.round((localX - w*puzzleCellPx/2) / puzzleCellPx);
     const gy = Math.round((localY - h*puzzleCellPx/2) / puzzleCellPx);
     if(gx >= 0 && gy >= 0 && gx + w <= PUZZLE_GRID && gy + h <= PUZZLE_GRID
        && puzzleCanPlaceAt(gx, gy, w, h, piece)){
       piece.gx = gx; piece.gy = gy; piece.inTray = false;
-      board.appendChild(el);
       puzzleRepositionPiece(piece);
       puzzleCheckSolved();
     } else {
-      // lugar inválido — volta pra bandeja (se veio de lá) ou pro lugar original
+      // lugar inválido — volta pro lugar de origem
       piece.gx = puzzleDrag.originalGx; piece.gy = puzzleDrag.originalGy;
       piece.inTray = puzzleDrag.inTrayAtStart;
-      if(piece.inTray) tray.appendChild(el); else board.appendChild(el);
+      if(piece.inTray && el.parentNode !== tray) tray.appendChild(el);
+      else if(!piece.inTray && el.parentNode !== board) board.appendChild(el);
       puzzleRepositionPiece(piece);
       if(!puzzleDrag.inTrayAtStart) toast('Posição inválida');
     }
   } else if(droppedOnTray){
-    // soltou na bandeja — sempre vai pra bandeja
+    // soltou na bandeja — vai pra bandeja
+    if(el.parentNode !== tray) tray.appendChild(el);
     piece.gx = 0; piece.gy = 0; piece.inTray = true;
-    tray.appendChild(el);
     puzzleRepositionPiece(piece);
   } else {
     // soltou fora de qualquer lugar — volta pro lugar de origem
     piece.gx = puzzleDrag.originalGx; piece.gy = puzzleDrag.originalGy;
     piece.inTray = puzzleDrag.inTrayAtStart;
-    if(piece.inTray) tray.appendChild(el); else board.appendChild(el);
+    if(piece.inTray && el.parentNode !== tray) tray.appendChild(el);
+    else if(!piece.inTray && el.parentNode !== board) board.appendChild(el);
     puzzleRepositionPiece(piece);
   }
 
@@ -389,8 +399,12 @@ function puzzleCancelDrag(){
   el.style.left = '';
   el.style.top = '';
   el.style.zIndex = '';
-  if(piece.inTray) document.getElementById('puzzleTray').appendChild(el);
-  else document.getElementById('puzzleBoard').appendChild(el);
+  el.style.margin = '';
+  if(piece.inTray && el.parentNode !== document.getElementById('puzzleTray')){
+    document.getElementById('puzzleTray').appendChild(el);
+  } else if(!piece.inTray && el.parentNode !== document.getElementById('puzzleBoard')){
+    document.getElementById('puzzleBoard').appendChild(el);
+  }
   puzzleRepositionPiece(piece);
   puzzleDrag = null;
 }
