@@ -3,17 +3,19 @@
    ---------------------------------------------------------
    Cada fase gera um tabuleiro 8x8 particionado em retângulos
    coloridos que se encaixam perfeitamente (garante que sempre
-   existe solução). Algumas peças já vêm fixas no tabuleiro
-   como dica; o resto vai pra bandeja pro jogador arrastar.
+   existe pelo menos uma solução). 1-2 peças já vêm fixas no
+   tabuleiro como dica; o resto vai pra bandeja.
 
-   Cada peça tem UM lugar e UMA orientação certos (a mesma do
-   particionamento original). Encaixou no lugar exato = 🟢
-   correta e trava ali. Qualquer outro lugar = 🔴 errada, volta
-   pra bandeja. Fase completa (todas as peças da bandeja
-   corretas) dá +N de Inteligência e já monta a próxima fase.
+   O objetivo é ENCHER o tabuleiro todo: cada peça pode ser
+   encaixada em QUALQUER lugar vazio onde ela caiba (não tem
+   posição secreta única) — o jogo só rejeita se sair do
+   tabuleiro ou sobrepor outra peça. Fase completa quando não
+   sobra nenhuma célula vazia. Dá +N de Inteligência e já monta
+   a próxima fase (um pouco mais difícil).
 
-   Toque simples numa peça da bandeja não faz nada; dois toques
-   rápidos (menos de 350ms de diferença) giram ela 90°.
+   Peça já encaixada pode ser pega de novo pra mudar de lugar
+   (só não pode mexer nas travadas). Dois toques rápidos
+   (<350ms) numa peça giram ela 90°; toque único não faz nada.
 ========================================================= */
 
 let puzzleGame = null; // guarda a fase em andamento — sai e volta sem perder progresso (só reseta recarregando a página)
@@ -112,11 +114,12 @@ function puzzleColorPieces(pieces){
   return colors;
 }
 
-/* Dificuldade sobe com a fase: peças menores e menos dicas fixas */
+/* Dificuldade sobe com a fase: peças menores e um pouco mais delas travadas
+   (mas sempre pouquíssimas — o grosso do desafio é montar o resto sozinho) */
 function puzzleDifficultyForPhase(phase){
   return {
     maxDim: phase <= 3 ? 4 : (phase <= 7 ? 3 : 2),
-    lockRatio: Math.max(0.12, 0.5 - phase * 0.035),
+    lockCount: phase <= 4 ? 1 : 2,
     reward: Math.min(1 + Math.floor((phase - 1) / 3), 5),
   };
 }
@@ -127,20 +130,18 @@ function puzzleBuildPhase(){
   const colors = puzzleColorPieces(rects);
   const withMeta = rects.map((r,i)=>({ ...r, color: colors[i], area: r.w*r.h }));
 
-  // trava as maiores peças primeiro (viram a "dica" visual do nível)
+  // trava só 1-2 peças (as maiores, viram a "dica" visual do nível)
   const order = withMeta.map((_,i)=>i).sort((a,b)=> withMeta[b].area - withMeta[a].area);
-  const lockCount = Math.max(1, Math.round(withMeta.length * cfg.lockRatio));
-  const lockedSet = new Set(order.slice(0, lockCount));
+  const lockedSet = new Set(order.slice(0, Math.min(cfg.lockCount, withMeta.length)));
 
   const pieces = withMeta.map((r,i)=>{
     const locked = lockedSet.has(i);
     let w = r.w, h = r.h;
-    // metade das peças da bandeja já nasce girada, pra obrigar o jogador a girar de volta
+    // metade das peças da bandeja já nasce girada, só pra variar (não tem "certo" único de orientação)
     if(!locked && w !== h && Math.random() < 0.5){ const t = w; w = h; h = t; }
     return {
       id: 'pp' + i, color: r.color, locked,
-      solX: r.x, solY: r.y, solW: r.w, solH: r.h,
-      w, h, correct: locked,
+      w, h, placed: locked,
       x: locked ? r.x : null, y: locked ? r.y : null,
       _lastTapAt: 0,
     };
@@ -153,9 +154,28 @@ function puzzleBuildPhase(){
 
   puzzleGame.reward = cfg.reward;
   puzzleGame.pieces = pieces;
-  puzzleGame.total = pieces.filter(p => !p.locked).length;
-  puzzleGame.correctCount = 0;
+  puzzleGame.occ = Array.from({length: PUZZLE_BOARD_SIZE}, ()=> new Array(PUZZLE_BOARD_SIZE).fill(null));
+  pieces.forEach(p=>{ if(p.locked) puzzleMarkOcc(p); });
   puzzleRenderAll();
+}
+
+function puzzleMarkOcc(p){
+  for(let yy=p.y; yy<p.y+p.h; yy++) for(let xx=p.x; xx<p.x+p.w; xx++) puzzleGame.occ[yy][xx] = p.id;
+}
+function puzzleClearOcc(p){
+  if(p.x == null) return;
+  for(let yy=p.y; yy<p.y+p.h; yy++) for(let xx=p.x; xx<p.x+p.w; xx++){
+    if(puzzleGame.occ[yy][xx] === p.id) puzzleGame.occ[yy][xx] = null;
+  }
+}
+function puzzleCanPlaceAt(p, col, row){
+  if(col < 0 || row < 0 || col+p.w > PUZZLE_BOARD_SIZE || row+p.h > PUZZLE_BOARD_SIZE) return false;
+  for(let yy=row; yy<row+p.h; yy++) for(let xx=col; xx<col+p.w; xx++) if(puzzleGame.occ[yy][xx] != null) return false;
+  return true;
+}
+function puzzleIsFull(){
+  for(let y=0;y<PUZZLE_BOARD_SIZE;y++) for(let x=0;x<PUZZLE_BOARD_SIZE;x++) if(puzzleGame.occ[y][x] == null) return false;
+  return true;
 }
 
 /* =========================================================
@@ -176,14 +196,14 @@ function puzzleRenderAll(){
 
   puzzleGame.pieces.forEach(p=>{
     const el = document.createElement('div');
-    el.className = 'puzzle-piece' + (p.locked ? ' fixed' : (p.correct ? ' correct' : ''));
+    el.className = 'puzzle-piece' + (p.locked ? ' fixed' : (p.placed ? ' correct' : ''));
     el.style.background = PUZZLE_COLOR_HEX[p.color];
     p.el = el;
     if(p.x != null){
       el.style.gridColumn = (p.x + 1) + ' / span ' + p.w;
       el.style.gridRow = (p.y + 1) + ' / span ' + p.h;
       board.appendChild(el);
-      if(!p.locked) puzzleAttachDrag(el, p); // peça já correta não é mais arrastável
+      if(!p.locked) puzzleAttachDrag(el, p); // travada não pode ser movida, o resto pode ser reposicionado
     } else {
       puzzleSizeForTray(el, p);
       trayEl.appendChild(el);
@@ -191,9 +211,14 @@ function puzzleRenderAll(){
     }
   });
 
+  puzzleUpdateHud();
+}
+function puzzleUpdateHud(){
+  const placedFree = puzzleGame.pieces.filter(p => !p.locked && p.placed).length;
+  const totalFree = puzzleGame.pieces.filter(p => !p.locked).length;
   document.getElementById('puzzlePhase').textContent = puzzleGame.phase;
-  document.getElementById('puzzleCorrect').textContent = puzzleGame.correctCount;
-  document.getElementById('puzzleTotal').textContent = puzzleGame.total;
+  document.getElementById('puzzleCorrect').textContent = placedFree;
+  document.getElementById('puzzleTotal').textContent = totalFree;
   document.getElementById('puzzleNextReward').textContent = '+' + puzzleGame.reward + ' 🧠';
 }
 
@@ -208,16 +233,19 @@ function puzzleSizeForTray(el, p){
 ========================================================= */
 function puzzleAttachDrag(el, p){
   el.addEventListener('pointerdown', function(e){
-    if(p.locked || p.correct) return;
+    if(p.locked) return;
     e.preventDefault();
+    e.stopPropagation();
     const startX = e.clientX, startY = e.clientY;
-    let dragging = false, originRect = null;
+    let dragging = false, originRect = null, wasPlaced = p.placed;
     try{ el.setPointerCapture(e.pointerId); }catch(err){}
 
     function onMove(ev){
+      ev.preventDefault();
       const dx = ev.clientX - startX, dy = ev.clientY - startY;
       if(!dragging && Math.hypot(dx, dy) > 6){
         dragging = true;
+        if(wasPlaced) puzzleClearOcc(p); // libera as células antigas enquanto arrasta pra reposicionar
         originRect = el.getBoundingClientRect();
         el.classList.add('dragging');
         el.style.position = 'fixed';
@@ -226,6 +254,7 @@ function puzzleAttachDrag(el, p){
         el.style.width = originRect.width + 'px';
         el.style.height = originRect.height + 'px';
         document.body.appendChild(el);
+        try{ el.setPointerCapture(e.pointerId); }catch(err){} // reafirma a captura depois de trocar de pai no DOM
       }
       if(dragging){
         el.style.left = (originRect.left + dx) + 'px';
@@ -238,9 +267,9 @@ function puzzleAttachDrag(el, p){
       el.removeEventListener('pointercancel', onUp);
       el.classList.remove('dragging');
       if(dragging){
-        puzzleHandleDrop(p, el, ev.clientX, ev.clientY);
+        puzzleHandleDrop(p, el, ev.clientX, ev.clientY, wasPlaced);
       } else {
-        // toque simples não faz nada — só 2 toques rápidos giram (ver dica na tela)
+        // toque simples não faz nada — só 2 toques rápidos giram
         const now = Date.now();
         if(p._lastTapAt && (now - p._lastTapAt) < 350){
           p._lastTapAt = 0;
@@ -258,11 +287,27 @@ function puzzleAttachDrag(el, p){
 
 function puzzleRotate(p, el){
   if(p.w === p.h) return; // peça quadrada, girar não muda nada
-  const t = p.w; p.w = p.h; p.h = t;
-  puzzleSizeForTray(el, p);
+  if(p.placed){
+    const oldX = p.x, oldY = p.y, oldW = p.w, oldH = p.h;
+    puzzleClearOcc(p);
+    p.w = oldH; p.h = oldW;
+    if(puzzleCanPlaceAt(p, oldX, oldY)){
+      puzzleMarkOcc(p);
+      el.style.gridColumn = (oldX + 1) + ' / span ' + p.w;
+      el.style.gridRow = (oldY + 1) + ' / span ' + p.h;
+    } else {
+      p.w = oldW; p.h = oldH; // não coube girada aqui, desfaz
+      puzzleMarkOcc(p);
+      el.classList.add('wrong');
+      setTimeout(()=> el.classList.remove('wrong'), 620);
+    }
+  } else {
+    const t = p.w; p.w = p.h; p.h = t;
+    puzzleSizeForTray(el, p);
+  }
 }
 
-function puzzleHandleDrop(p, el, clientX, clientY){
+function puzzleHandleDrop(p, el, clientX, clientY, wasPlaced){
   const boardEl = document.getElementById('puzzleBoard');
   const bRect = boardEl.getBoundingClientRect();
   const padPx = 6, gapPx = 2; // precisa bater com o padding/gap do .puzzle-board no CSS
@@ -280,11 +325,11 @@ function puzzleHandleDrop(p, el, clientX, clientY){
     col = Math.max(0, Math.min(col, PUZZLE_BOARD_SIZE - p.w));
     row = Math.max(0, Math.min(row, PUZZLE_BOARD_SIZE - p.h));
 
-    // só existe UM lugar/orientação certos por peça — qualquer outro é "errado",
-    // mesmo que a célula esteja livre (não tem tabuleiro parcialmente certo).
-    if(col === p.solX && row === p.solY && p.w === p.solW && p.h === p.solH){
+    // encaixa em QUALQUER lugar livre (dentro do tabuleiro, sem sobrepor outra peça)
+    if(puzzleCanPlaceAt(p, col, row)){
       success = true;
-      p.x = col; p.y = row; p.correct = true;
+      p.x = col; p.y = row; p.placed = true;
+      puzzleMarkOcc(p);
       el.style.position = ''; el.style.left = ''; el.style.top = '';
       el.style.width = ''; el.style.height = '';
       el.style.gridColumn = (col+1) + ' / span ' + p.w;
@@ -292,9 +337,7 @@ function puzzleHandleDrop(p, el, clientX, clientY){
       el.className = 'puzzle-piece correct';
       el.style.background = PUZZLE_COLOR_HEX[p.color];
       boardEl.appendChild(el);
-
-      puzzleGame.correctCount++;
-      document.getElementById('puzzleCorrect').textContent = puzzleGame.correctCount;
+      puzzleUpdateHud();
       puzzleCheckWin();
     } else {
       el.classList.add('wrong');
@@ -303,18 +346,31 @@ function puzzleHandleDrop(p, el, clientX, clientY){
   }
 
   if(!success){
-    el.style.position = ''; el.style.left = ''; el.style.top = '';
-    puzzleSizeForTray(el, p);
-    document.getElementById('puzzleTray').appendChild(el);
+    if(wasPlaced){
+      // estava encaixada antes de pegar pra mover — se não coube no novo lugar, volta pro lugar antigo
+      puzzleMarkOcc(p);
+      el.style.position = ''; el.style.left = ''; el.style.top = '';
+      el.style.width = ''; el.style.height = '';
+      el.style.gridColumn = (p.x+1) + ' / span ' + p.w;
+      el.style.gridRow = (p.y+1) + ' / span ' + p.h;
+      el.className = 'puzzle-piece correct';
+      boardEl.appendChild(el);
+    } else {
+      el.style.position = ''; el.style.left = ''; el.style.top = '';
+      el.className = 'puzzle-piece';
+      el.style.background = PUZZLE_COLOR_HEX[p.color];
+      puzzleSizeForTray(el, p);
+      document.getElementById('puzzleTray').appendChild(el);
+    }
   }
 }
 
 function puzzleCheckWin(){
-  if(puzzleGame.correctCount < puzzleGame.total) return;
+  if(!puzzleIsFull()) return;
   const reward = puzzleGame.reward;
   state.stats.inteligencia = (state.stats.inteligencia || 0) + reward;
   saveState();
   toast('Fase ' + puzzleGame.phase + ' completa! +' + reward + ' 🧠');
   puzzleGame.phase++;
-  setTimeout(puzzleBuildPhase, 900); // dá um respiro pro jogador ver o tabuleiro todo certo antes de trocar
+  setTimeout(puzzleBuildPhase, 900); // dá um respiro pro jogador ver o tabuleiro todo cheio antes de trocar
 }
