@@ -346,8 +346,8 @@ function puzzleHandleDrop(p, el, clientX, clientY, wasPlaced){
   }
 
   if(!success){
-    if(wasPlaced){
-      // estava encaixada antes de pegar pra mover — se não coube no novo lugar, volta pro lugar antigo
+    if(wasPlaced && overBoard){
+      // estava encaixada, tentou mover pra outro lugar do tabuleiro mas não coube — volta pro lugar antigo
       puzzleMarkOcc(p);
       el.style.position = ''; el.style.left = ''; el.style.top = '';
       el.style.width = ''; el.style.height = '';
@@ -356,6 +356,8 @@ function puzzleHandleDrop(p, el, clientX, clientY, wasPlaced){
       el.className = 'puzzle-piece correct';
       boardEl.appendChild(el);
     } else {
+      // soltou fora do tabuleiro (ou não estava encaixada) — devolve pra bandeja
+      if(wasPlaced){ p.x = null; p.y = null; p.placed = false; puzzleUpdateHud(); }
       el.style.position = ''; el.style.left = ''; el.style.top = '';
       el.className = 'puzzle-piece';
       el.style.background = PUZZLE_COLOR_HEX[p.color];
