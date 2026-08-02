@@ -309,10 +309,13 @@ function puzzleRotate(p, el){
 
 function puzzleHandleDrop(p, el, clientX, clientY, wasPlaced){
   const boardEl = document.getElementById('puzzleBoard');
+  const trayElRef = document.getElementById('puzzleTray');
   const bRect = boardEl.getBoundingClientRect();
+  const trRect = trayElRef.getBoundingClientRect();
   const padPx = 6, gapPx = 2; // precisa bater com o padding/gap do .puzzle-board no CSS
   const cellPx = (bRect.width - padPx*2 - gapPx*7) / 8;
   const overBoard = clientX >= bRect.left && clientX <= bRect.right && clientY >= bRect.top && clientY <= bRect.bottom;
+  const overTray = clientX >= trRect.left && clientX <= trRect.right && clientY >= trRect.top && clientY <= trRect.bottom;
   let success = false;
 
   if(overBoard){
@@ -343,11 +346,21 @@ function puzzleHandleDrop(p, el, clientX, clientY, wasPlaced){
       el.classList.add('wrong');
       setTimeout(()=> el.classList.remove('wrong'), 620);
     }
+  } else if(overTray && wasPlaced){
+    // soltou em cima da bandeja: manda a peça de volta pro lugar inicial (fora do tabuleiro)
+    p.x = null; p.y = null; p.placed = false;
+    puzzleUpdateHud();
+    el.style.position = ''; el.style.left = ''; el.style.top = '';
+    el.className = 'puzzle-piece';
+    el.style.background = PUZZLE_COLOR_HEX[p.color];
+    puzzleSizeForTray(el, p);
+    trayElRef.appendChild(el);
+    success = true; // já foi resolvido aqui, não cai no bloco de "voltar pro lugar antigo" abaixo
   }
 
   if(!success){
-    if(wasPlaced && overBoard){
-      // estava encaixada, tentou mover pra outro lugar do tabuleiro mas não coube — volta pro lugar antigo
+    if(wasPlaced){
+      // não soltou em cima do tabuleiro nem da bandeja (ex: largou no meio do HUD) — cancela e volta de onde saiu
       puzzleMarkOcc(p);
       el.style.position = ''; el.style.left = ''; el.style.top = '';
       el.style.width = ''; el.style.height = '';
@@ -356,8 +369,7 @@ function puzzleHandleDrop(p, el, clientX, clientY, wasPlaced){
       el.className = 'puzzle-piece correct';
       boardEl.appendChild(el);
     } else {
-      // soltou fora do tabuleiro (ou não estava encaixada) — devolve pra bandeja
-      if(wasPlaced){ p.x = null; p.y = null; p.placed = false; puzzleUpdateHud(); }
+      // não estava encaixada (veio da bandeja) e não achou lugar válido — permanece na bandeja
       el.style.position = ''; el.style.left = ''; el.style.top = '';
       el.className = 'puzzle-piece';
       el.style.background = PUZZLE_COLOR_HEX[p.color];
