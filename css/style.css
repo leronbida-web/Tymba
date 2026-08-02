@@ -1351,6 +1351,20 @@
     z-index:1000;
     transition:none;
   }
+  /* feedback visual: peça na posição correta da solução (verde) ou errada (vermelho) */
+  .puzzle-piece.correct{
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,0.18), 0 0 0 2.5px rgba(74,222,158,0.9), 0 0 14px rgba(74,222,158,0.35);
+  }
+  .puzzle-piece.wrong{
+    animation:puzzleWrong 0.6s ease;
+  }
+  @keyframes puzzleWrong{
+    0%, 100%{ transform:translateX(0); }
+    20%{ transform:translateX(-4px); box-shadow:inset 0 0 0 1px rgba(0,0,0,0.18), 0 0 0 2.5px rgba(255,107,107,0.9), 0 0 14px rgba(255,107,107,0.4); }
+    40%{ transform:translateX(4px);  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.18), 0 0 0 2.5px rgba(255,107,107,0.9), 0 0 14px rgba(255,107,107,0.4); }
+    60%{ transform:translateX(-3px); box-shadow:inset 0 0 0 1px rgba(0,0,0,0.18), 0 0 0 2.5px rgba(255,107,107,0.9), 0 0 14px rgba(255,107,107,0.4); }
+    80%{ transform:translateX(3px);  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.18), 0 0 0 2.5px rgba(255,107,107,0.9), 0 0 14px rgba(255,107,107,0.4); }
+  }
   /* bandeja (peças fora do tabuleiro). O JS controla o tamanho real de cada peça
      via inline style (width/height em pixels baseado no tamanho da peça). Aqui
      só organizamos o layout flexbox. */

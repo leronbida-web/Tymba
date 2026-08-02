@@ -128,10 +128,11 @@ function puzzleSetupLevel(phaseNum){
 
   puzzlePieces = PUZZLE_PIECES_DEF.map(def => {
     const sol = puzzleSolution[def.id];
+    if(!sol) return null; // peça que não coube na geração — some do jogo
     const isFixed = puzzleFixed.includes(def.id);
-    const rot = sol ? sol.rot : 0;
-    const gx = sol ? sol.gx : 0;
-    const gy = sol ? sol.gy : 0;
+    const rot = sol.rot;
+    const gx = sol.gx;
+    const gy = sol.gy;
     return {
       def,
       rot,
@@ -141,7 +142,7 @@ function puzzleSetupLevel(phaseNum){
       fixed: isFixed,
       el: null,
     };
-  });
+  }).filter(p => p !== null);
 
   puzzleRender();
   puzzleRefreshHud();
@@ -152,6 +153,37 @@ function puzzleRefreshHud(){
   const reward = Math.pow(2, puzzlePhase - 1);
   document.getElementById('puzzleNextReward').textContent = '+' + reward + ' 🧠';
   document.getElementById('puzzleBest').textContent = state.puzzleBest || 0;
+  // quantas peças estão no lugar certo? (exclui peças fixas, que já contam como corretas)
+  const { correct, total } = puzzleCountCorrect();
+  document.getElementById('puzzleCorrect').textContent = correct;
+  document.getElementById('puzzleTotal').textContent = total;
+}
+
+// conta quantas peças estão na posição+rotação corretas. Peças fixas contam como corretas.
+function puzzleCountCorrect(){
+  let correct = 0;
+  const total = puzzlePieces.length;
+  for(const piece of puzzlePieces){
+    if(piece.fixed){ correct++; continue; }
+    const sol = puzzleSolution[piece.def.id];
+    if(!sol) continue;
+    if(!piece.inTray && piece.gx === sol.gx && piece.gy === sol.gy && piece.rot === sol.rot){
+      correct++;
+    }
+  }
+  return { correct, total };
+}
+
+// marca visualmente uma peça como correta (verde) ou errada (vermelho por 600ms)
+function puzzleMarkPiece(piece, status){
+  if(!piece.el) return;
+  piece.el.classList.remove('correct', 'wrong');
+  if(status === 'correct'){
+    piece.el.classList.add('correct');
+  } else if(status === 'wrong'){
+    piece.el.classList.add('wrong');
+    setTimeout(() => { if(piece.el) piece.el.classList.remove('wrong'); }, 600);
+  }
 }
 
 // ---------------- RENDER ----------------
@@ -193,7 +225,7 @@ function puzzleRender(){
   for(const piece of puzzlePieces){
     const el = document.createElement('div');
     el.className = 'puzzle-piece';
-    if(piece.fixed) el.classList.add('fixed');
+    if(piece.fixed) el.classList.add('fixed', 'correct'); // fixas já contam como corretas
     el.style.background = piece.def.color;
     if(piece.rot) el.classList.add('rot90');
     piece.el = el;
@@ -363,6 +395,16 @@ function puzzleEndDrag(e){
        && puzzleCanPlaceAt(gx, gy, w, h, piece)){
       piece.gx = gx; piece.gy = gy; piece.inTray = false;
       puzzleRepositionPiece(piece);
+      // feedback visual: a peça tá na posição+rotação certas da solução?
+      const sol = puzzleSolution[piece.def.id];
+      if(sol && piece.gx === sol.gx && piece.gy === sol.gy && piece.rot === sol.rot){
+        puzzleMarkPiece(piece, 'correct');
+        // se a peça veio de outra posição do tabuleiro, limpa o estado da posição anterior
+        // (não precisa fazer nada, o gx/gy já foram atualizados)
+      } else {
+        puzzleMarkPiece(piece, 'wrong');
+      }
+      puzzleRefreshHud();
       puzzleCheckSolved();
     } else {
       // lugar inválido — volta pro lugar de origem
@@ -371,7 +413,10 @@ function puzzleEndDrag(e){
       if(piece.inTray && el.parentNode !== tray) tray.appendChild(el);
       else if(!piece.inTray && el.parentNode !== board) board.appendChild(el);
       puzzleRepositionPiece(piece);
-      if(!puzzleDrag.inTrayAtStart) toast('Posição inválida');
+      if(!puzzleDrag.inTrayAtStart){
+        toast('Posição inválida');
+        puzzleMarkPiece(piece, 'wrong');
+      }
     }
   } else if(droppedOnTray){
     // soltou na bandeja — vai pra bandeja
@@ -424,15 +469,12 @@ function puzzleCanPlaceAt(gx, gy, w, h, exceptPiece){
 
 // ---------------- VITÓRIA / RECOMPENSA ----------------
 function puzzleCheckSolved(){
-  for(const def of PUZZLE_PIECES_DEF){
-    const sol = puzzleSolution[def.id];
-    if(!sol) continue;
-    const piece = puzzlePieces.find(p => p.def.id === def.id);
-    if(piece.inTray) return;
-    if(piece.gx !== sol.gx || piece.gy !== sol.gy || piece.rot !== sol.rot) return;
+  if(puzzleSolved) return;
+  const { correct, total } = puzzleCountCorrect();
+  if(correct >= total){
+    puzzleSolved = true;
+    setTimeout(puzzleClaimReward, 600);
   }
-  puzzleSolved = true;
-  setTimeout(puzzleClaimReward, 500);
 }
 
 function puzzleClaimReward(){
