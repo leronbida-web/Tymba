@@ -120,7 +120,7 @@ function puzzleDifficultyForPhase(phase){
   return {
     maxDim: phase <= 3 ? 4 : (phase <= 7 ? 3 : 2),
     lockCount: phase <= 4 ? 1 : 2,
-    reward: Math.min(1 + Math.floor((phase - 1) / 3), 5),
+    reward: phase * 5,
   };
 }
 
