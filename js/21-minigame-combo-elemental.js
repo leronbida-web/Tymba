@@ -1,18 +1,20 @@
 /* =========================================================
-   MINIGAME: COMBO ELEMENTAL (treina Resistência)
+   MINIGAME: COMBO ELEMENTAL (treina Especial)
    ---------------------------------------------------------
    Diferente do Reflexo (19): aqui os símbolos não caem em
    pistas separadas pra apertar "na hora certa" — eles descem
-   numa fila única, em grupos (combos, tipo "água água fogo
-   terra ar ar"), e o jogador aperta o teclado de 4 elementos
-   NA ORDEM CERTA, o mais rápido possível, sem deixar nenhum
-   símbolo passar da linha de baixo sem ser digitado.
+   em LINHAS HORIZONTAIS inteiras (um combo por linha, tipo
+   "água ar fogo terra" lado a lado numa fileira só), uma
+   linha atrás da outra. O jogador aperta o teclado de 4
+   elementos na ordem da fileira (esquerda pra direita), o
+   mais rápido possível, sem deixar nenhum símbolo passar da
+   linha de baixo sem ser digitado.
 
-   Apertar o botão certo (o do símbolo mais antigo da fila)
-   remove ele e soma ponto. Apertar o errado, ou deixar um
-   símbolo passar da linha sem digitar, custa 1 vida. 3 vidas
-   erradas = fim de jogo. Novos combos continuam chegando o
-   tempo todo, cada vez mais rápido e mais compridos.
+   Apertar o botão certo (o do símbolo mais antigo ainda na
+   fila) remove ele e soma ponto. Apertar o errado, ou deixar
+   um símbolo passar da linha sem digitar, custa 1 vida. 3
+   vidas erradas = fim de jogo. Novas fileiras continuam
+   chegando o tempo todo, cada vez mais rápido e mais compridas.
 ========================================================= */
 
 const COMBO_ELEMENTS = ['fogo', 'agua', 'ar', 'terra'];
@@ -21,6 +23,7 @@ const COMBO_COLOR = { fogo: '#E8794A', agua: '#2E6BB8', ar: '#A9CFE0', terra: '#
 
 let comboGame = null;
 let comboLastTs = 0;
+let comboSeqCounter = 0;
 
 /* ---------- abrir/fechar a tela ---------- */
 function startCombo(){
@@ -29,10 +32,11 @@ function startCombo(){
   comboSetupButtons();
   comboResizeCanvas();
   comboLastTs = 0;
+  comboSeqCounter = 0;
   comboGame = {
     active: true,
     score: 0, level: 1, lives: 3,
-    queue: [], // {el, y} — o mais antigo é sempre o de maior y (o que caiu mais)
+    queue: [], // {el, x, y, seq} — o próximo a digitar é sempre o de menor seq (ordem de leitura da fileira)
     lastSpawnAt: 0,
     rafId: null,
   };
@@ -95,9 +99,9 @@ function comboResizeCanvas(){
 }
 
 /* ---------- dificuldade em função do nível ---------- */
-function comboFallSpeed(level){ return 62 + level * 9; } // px/s — mais devagar que o Reflexo, dá tempo de ler a fila
-function comboSpawnInterval(level){ return Math.max(1100, 2300 - level * 110); } // ms entre combos novos
-function comboBatchSize(level){ return 2 + Math.min(Math.floor(level / 2), 4); } // cresce até 6 símbolos por combo
+function comboFallSpeed(level){ return 55 + level * 8; } // px/s — dá tempo de ler a fileira inteira
+function comboSpawnInterval(level){ return Math.max(1300, 2600 - level * 120); } // ms entre fileiras novas
+function comboRowSize(level){ return 3 + Math.min(Math.floor(level / 2), 4); } // cresce até 7 símbolos por fileira
 
 /* ---------- loop principal ---------- */
 function comboLoop(ts){
@@ -114,22 +118,22 @@ function comboLoop(ts){
 
 function comboUpdate(ts, dt){
   const g = comboGame;
-  g.level = 1 + Math.floor(g.score / 8);
+  g.level = 1 + Math.floor(g.score / 10);
 
-  // só manda um combo novo quando a fila já esvaziou bastante, senão empilha demais
-  if(ts - g.lastSpawnAt > comboSpawnInterval(g.level) && g.queue.length < 3){
+  // só manda uma fileira nova quando a fila já esvaziou bastante, senão empilha demais
+  if(ts - g.lastSpawnAt > comboSpawnInterval(g.level) && g.queue.length < 4){
     g.lastSpawnAt = ts;
-    comboSpawnBatch(g.level);
+    comboSpawnRow(g.level);
   }
 
   const canvas = document.getElementById('comboCanvas');
   const H = canvas._logicalH || 400;
-  const missLine = H - 60;
+  const missLine = H - 70;
   const speed = comboFallSpeed(g.level);
-  for(let i = g.queue.length - 1; i >= 0; i--){
-    g.queue[i].y += speed * dt;
-  }
-  // o mais antigo (maior y) passou da linha sem ser digitado? conta erro e remove só ele
+  for(let i = 0; i < g.queue.length; i++) g.queue[i].y += speed * dt;
+
+  // o(s) símbolo(s) mais antigo(s) passou da linha sem ser digitado? conta erro e remove
+  comboSortQueue();
   while(g.queue.length && g.queue[0].y > missLine){
     g.queue.shift();
     comboRegisterMiss();
@@ -137,23 +141,32 @@ function comboUpdate(ts, dt){
   }
 }
 
-/* Gera um novo combo: uma sequência de 2 a 6 símbolos, espaçados verticalmente
-   (o primeiro da sequência entra na frente/mais embaixo). */
-function comboSpawnBatch(level){
-  const size = comboBatchSize(level);
-  const gap = 60; // espaço vertical entre símbolos do mesmo combo
-  // encontra o y mais alto (mais negativo) já ocupado na fila, pra não sobrepor com o combo anterior
+/* Ordena a fila: primeiro por posição (quem já caiu mais fica na frente),
+   e dentro da MESMA fileira (mesmo y), por ordem de leitura esquerda->direita. */
+function comboSortQueue(){
+  comboGame.queue.sort((a,b)=> (b.y - a.y) || (a.seq - b.seq));
+}
+
+/* Gera uma fileira nova: 3 a 7 símbolos lado a lado, na MESMA altura,
+   espalhados horizontalmente. A fileira inteira desce junto. */
+function comboSpawnRow(level){
+  const size = comboRowSize(level);
+  const rowGap = 100; // distância vertical entre uma fileira e a próxima
   let startY = -30;
   comboGame.queue.forEach(s=>{ if(s.y < startY) startY = s.y; });
-  startY -= gap;
+  startY -= rowGap;
+
+  const canvas = document.getElementById('comboCanvas');
+  const W = canvas._logicalW || 300;
+  const margin = 34;
+  const usableW = Math.max(W - margin*2, 40);
+
   for(let i = 0; i < size; i++){
     const el = COMBO_ELEMENTS[Math.floor(Math.random() * COMBO_ELEMENTS.length)];
-    // índice 0 é o PRIMEIRO da sequência a ser digitado: fica mais embaixo (chega primeiro)
-    const y = startY - i * gap;
-    comboGame.queue.push({ el, y });
+    const x = size > 1 ? (margin + (usableW * i) / (size - 1)) : W/2;
+    comboGame.queue.push({ el, x, y: startY, seq: comboSeqCounter++ });
   }
-  // garante ordem por posição (maior y primeiro) — já devia estar ordenado, mas confirma
-  comboGame.queue.sort((a,b)=> b.y - a.y);
+  comboSortQueue();
 }
 
 /* ---------- entrada do jogador ---------- */
@@ -162,7 +175,7 @@ function comboHandlePress(el, btn){
   const g = comboGame;
   if(g.queue.length === 0) return; // nada pra digitar ainda
 
-  const next = g.queue[0]; // o mais antigo (maior y) é sempre o esperado agora
+  const next = g.queue[0]; // o próximo esperado (mais antigo/mais à esquerda da fileira em jogo)
   if(next.el === el){
     g.queue.shift();
     g.score++;
@@ -186,9 +199,9 @@ function comboRegisterMiss(){
 
 function comboGameOver(){
   const reward = Math.max(1, comboGame.score);
-  state.stats.resistencia = (state.stats.resistencia || 0) + reward;
+  state.stats.especial = (state.stats.especial || 0) + reward;
   saveState();
-  toast('Fim de jogo! ' + comboGame.score + ' pontos · +' + reward + ' 💪');
+  toast('Fim de jogo! ' + comboGame.score + ' pontos · +' + reward + ' ✨');
   comboStopLoop();
   setTimeout(comboBack, 1400);
 }
@@ -200,8 +213,7 @@ function comboDraw(){
   const W = canvas._logicalW || 300, H = canvas._logicalH || 400;
   ctx.clearRect(0, 0, W, H);
 
-  const cx = W / 2;
-  const missLine = H - 60;
+  const missLine = H - 70;
 
   // linha de "tem que digitar antes disso"
   ctx.strokeStyle = 'rgba(255,255,255,0.35)';
@@ -210,10 +222,11 @@ function comboDraw(){
   ctx.setLineDash([]);
 
   if(comboGame){
-    comboGame.queue.forEach((s, i)=>{
-      const isNext = i === 0;
+    const nextSeq = comboGame.queue.length ? comboGame.queue[0].seq : -1;
+    comboGame.queue.forEach(s=>{
+      const isNext = s.seq === nextSeq;
       ctx.beginPath();
-      ctx.arc(cx, s.y, isNext ? 26 : 21, 0, Math.PI*2);
+      ctx.arc(s.x, s.y, isNext ? 24 : 20, 0, Math.PI*2);
       ctx.fillStyle = COMBO_COLOR[s.el] + (isNext ? 'EE' : '99');
       ctx.fill();
       if(isNext){
@@ -221,10 +234,10 @@ function comboDraw(){
         ctx.strokeStyle = 'rgba(255,255,255,0.9)';
         ctx.stroke();
       }
-      ctx.font = (isNext ? '28px' : '22px') + ' sans-serif';
+      ctx.font = (isNext ? '24px' : '20px') + ' sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(COMBO_EMOJI[s.el], cx, s.y + 1);
+      ctx.fillText(COMBO_EMOJI[s.el], s.x, s.y + 1);
     });
   }
 }
