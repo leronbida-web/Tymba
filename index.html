@@ -288,6 +288,11 @@
         <div class="title">Quebra-cabeça</div>
         <div class="sub">Inteligência</div>
       </button>
+      <button class="train-card" onclick="startCombo()">
+        <div class="icon">⚔️</div>
+        <div class="title">Combo</div>
+        <div class="sub">Resistência</div>
+      </button>
     </div>
   </div>
 
@@ -510,6 +515,24 @@
   </div>
 
 
+  <!-- COMBO ELEMENTAL (treina Resistência) -->
+  <div class="screen" id="screen-combo">
+    <div class="mira-wrap">
+      <button class="minigame-back-btn" onclick="comboBack()" aria-label="Voltar pra tela inicial">
+        ← <span>Voltar</span>
+      </button>
+      <div class="mira-hud">
+        <div>🎯 Pontos: <span id="comboScore">0</span></div>
+        <div>🚀 Nível: <span id="comboLevelLbl">1</span></div>
+        <div>💥 Vidas: <span id="comboVidas">3</span></div>
+      </div>
+      <canvas id="comboCanvas"></canvas>
+      <div class="reflexo-btn-row" id="comboButtonRow"></div>
+      <div class="mira-instructions">Aperte os botões na ordem certa pra completar o combo antes que ele passe!</div>
+    </div>
+  </div>
+
+
   <!-- DUELO -->
   <div class="screen" id="screen-duelo">
 
@@ -674,5 +697,6 @@
 <script src="js/18-minigame-simon.js?v=33"></script>
 <script src="js/19-minigame-reflexo-elemental.js?v=33"></script>
 <script src="js/20-minigame-quebracabeca.js?v=33"></script>
+<script src="js/21-minigame-combo-elemental.js?v=33"></script>
 </body>
 </html>
