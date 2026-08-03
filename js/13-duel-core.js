@@ -641,7 +641,7 @@ const DUEL_OPP_ZONE_SHIFT = 0.06;
 // Se o elemento não tiver entrada aqui, cai no emote 🛡️ padrão (spawnEmojiPop).
 const DUEL_SHIELD_SPRITES = {
   fogo: 'https://i.imgur.com/O39xqgr.gif',
-  terra: 'https://i.imgur.com/rF4JEfl.gif',
+  terra: 'https://i.imgur.com/qqRW7xy.gif',
   agua: 'https://i.imgur.com/CMNRRTd.gif',
   ar: 'https://i.imgur.com/cnjbGeB.gif',
 };
