@@ -954,11 +954,56 @@ function flashWorldHitFeedback(){
 function registerWorldPlayerHit(){
   worldPlayerHits++;
   flashWorldHitFeedback();
-  const countEl = document.getElementById('worldHitsCount');
-  if(countEl) countEl.textContent = worldPlayerHits;
+  renderWorldHpBar();
   if(worldPlayerHits >= WORLD_PLAYER_MAX_HITS){
     worldPlayerDeath();
   }
+}
+
+/* ---------- Barra de vida do Tymba no mundo (10 HP, 1 tiro = -1 HP) ----------
+   Reaproveita o mesmo elemento #worldHitsPill que já existia (aparece só de noite
+   com bichinho vivo por perto); só troca o conteúdo dele por uma barrinha visual
+   em vez do número cru de tiros levados. */
+function ensureWorldHpBarStyles(){
+  if(document.getElementById('worldHpBarStyles')) return;
+  const style = document.createElement('style');
+  style.id = 'worldHpBarStyles';
+  style.textContent = `
+    #worldHitsPill{ display:flex; align-items:center; gap:6px; }
+    .world-hp-bar-track{
+      position:relative; width:84px; height:12px; border-radius:7px;
+      background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.25); overflow:hidden;
+    }
+    .world-hp-bar-fill{
+      height:100%; border-radius:7px 0 0 7px;
+      background:linear-gradient(90deg,#43d17a,#2ecc71);
+      transition:width .25s ease, background .25s ease;
+    }
+    .world-hp-bar-label{ font-size:11px; font-weight:800; color:#fff; letter-spacing:.5px; font-variant-numeric: tabular-nums; }
+  `;
+  document.head.appendChild(style);
+}
+
+function renderWorldHpBar(){
+  const pill = document.getElementById('worldHitsPill');
+  if(!pill) return;
+  ensureWorldHpBarStyles();
+  const max = WORLD_PLAYER_MAX_HITS || 10;
+  const hp = Math.max(0, max - worldPlayerHits);
+  const pct = Math.max(0, Math.min(100, Math.round((hp / max) * 100)));
+  if(!pill.querySelector('.world-hp-bar-track')){
+    pill.innerHTML =
+      '<span style="font-size:14px;">❤️</span>' +
+      '<div class="world-hp-bar-track"><div class="world-hp-bar-fill"></div></div>' +
+      '<span class="world-hp-bar-label"></span>';
+  }
+  const fill = pill.querySelector('.world-hp-bar-fill');
+  const label = pill.querySelector('.world-hp-bar-label');
+  fill.style.width = pct + '%';
+  fill.style.background = pct <= 30
+    ? 'linear-gradient(90deg,#c0392b,#7f0000)'
+    : (pct <= 60 ? 'linear-gradient(90deg,#e67e22,#c0392b)' : 'linear-gradient(90deg,#43d17a,#2ecc71)');
+  label.textContent = hp + '/' + max;
 }
 
 // morte à noite: não ganha moedas nem XP — volta pros valores de quando entrou no mundo
@@ -1529,6 +1574,7 @@ function worldLoop(ts){
     worldPlayerHits = 0; // de dia fica seguro de novo
     const hitsPill = document.getElementById('worldHitsPill');
     if(hitsPill) hitsPill.style.display = 'none';
+    renderWorldHpBar();
     // bichinhos selvagens agora aparecem DE DIA (antes era de noite)
     if(w.nightIndex !== cyc.nightIndex){
       // recompensa por cada "dia do mundo" completo (dia+noite) que passou —
@@ -1676,9 +1722,8 @@ function worldLoop(ts){
   // ficar presa dentro do bloco "só de noite"
   updateWorldBalls(dt);
   const hitsPill = document.getElementById('worldHitsPill');
-  const hitsCount = document.getElementById('worldHitsCount');
   if(hitsPill) hitsPill.style.display = (!cyc.isDay && w.enemies.some(e=>e.alive)) ? 'flex' : 'none';
-  if(hitsCount) hitsCount.textContent = worldPlayerHits;
+  renderWorldHpBar();
   if(worldRAF === null) return; // morreu durante updateWorldBalls: worldPlayerDeath já cancelou o loop
 
   const mins = Math.floor(cyc.phaseRemainMs / 60000);
